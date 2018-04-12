@@ -6,8 +6,10 @@ Created on Sun Apr  1 16:27:06 2018
 """
 import numpy as np
 from auxiliary.io_csv import read_csv
+import pandas as pd
 
 data, header = read_csv('output/euroleague_season_2018_results.csv')
+#df = pd.read_csv('output/euroleague_season_2018_results-end.csv')
 nmatches = len(data)
 
 topTeams = ['Fenerbahce Istanbul', 'BC Olympiakos Piraeus', 'CSKA Moscow', 'Real Madrid BC']
