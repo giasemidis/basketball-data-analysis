@@ -61,7 +61,7 @@ def make_standings(results, nround):
     score_diffs = np.zeros(nteams, dtype=int)
     for p in np.unique(standing['Points'].values):
         if np.sum(standing['Points'].values == p) > 1:
-            print(p)
+#            print(p)
             # there are ties
             kk = standing['Points'].values == p
             teams = standing['Team ID'].iloc[kk]
