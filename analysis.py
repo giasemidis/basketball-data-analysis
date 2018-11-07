@@ -32,20 +32,25 @@ if year == 2017:
 elif year == 2016:
     # f4 teams in 2015-2016 year
     f4Teams = ['Fenerbahce Dogus Istanbul', 'CSKA Moscow',
-              'Lokomotiv Kuban', 'Baskonia Vitoria Gasteiz']
+               'Lokomotiv Kuban', 'Baskonia Vitoria Gasteiz']
 else:
-    sys.exit()
+    sys.exit('Year not valid')
 
 #%% Checks
-
+flag = False
 stand_teams = np.unique(standings['Club Name'])
 resul_teams = np.unique(data['Home Team'])
 if not np.in1d(stand_teams, resul_teams).all():
     ii = ~np.in1d(stand_teams, resul_teams)
     print(stand_teams[ii])
+    flag = True
 if not np.in1d(resul_teams, stand_teams).all():
     ii = ~np.in1d(resul_teams, stand_teams)
     print(resul_teams[ii])
+    flag = True
+
+if flag:
+    sys.exit('Fix inconsistancies in team names')
 
 #%%
 
