@@ -21,8 +21,8 @@ import sys
 
 # year (start of season)
 year = 2016
-data = pd.read_csv('data/euroleague_results_%d.csv' % year)
-standings = pd.read_csv('data/euroleague_standings_%d.csv' % year)
+data = pd.read_csv('data/euroleague_results_%d_%d.csv' % (year, year+1))
+standings = pd.read_csv('data/euroleague_standings_%d_%d.csv' % (year, year+1))
 
 #%%
 if year == 2017:
@@ -31,7 +31,7 @@ if year == 2017:
                'CSKA Moscow', 'Real Madrid']
 elif year == 2016:
     # f4 teams in 2015-2016 year
-    f4Teams = ['Fenerbahce Dogus Istanbul', 'CSKA Moscow',
+    f4Teams = ['Fenerbahce Istanbul', 'CSKA Moscow',
                'Lokomotiv Kuban', 'Baskonia Vitoria Gasteiz']
 else:
     sys.exit('Year not valid')
