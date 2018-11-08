@@ -28,6 +28,77 @@ def find_form(df, game_round, team_id):
     return form
 
 
+def make_features_from_df(data, standings):
+    '''game-level features:
+        standing of home team
+        standing of away team
+        avg scoring points of home team
+        avg scoring points of away team
+        avg against points of home team
+        avg against points of away team
+        wins to losses of home team
+        wins to losses of away team
+        form of home team (wins over the last 5 games)
+        form of away team (wins over the last 5 games)
+    '''
+    stands = standings.copy()
+    stands['Round'] += 1
+    new_df = data.merge(stands, how='left', 
+                        left_on=['Round', 'Home Team'],
+                        right_on=['Round', 'Club Name'])
+    new_df = new_df.merge(stands, how='left',
+                          left_on=['Round', 'Away Team'],
+                          right_on=['Round', 'Club Name'])
+
+    tmp = new_df[['Offence_x', 'Offence_y', 'Defence_x', 'Defence_y']].values
+    tmp /= np.repeat((new_df['Round'].values - 1)[:, np.newaxis], tmp.shape[1], axis=1)
+
+    new_df[['Offence_x', 'Offence_y', 'Defence_x', 'Defence_y']] = tmp
+
+#    tmp = new_df[['Wins_x', 'Losses_x']].values
+#    new_df['Wins_to_Losses_x'] = tmp[:, 0] / tmp[:, 1]
+#    tmp = new_df[['Wins_y', 'Losses_y']].values
+#    new_df['Wins_to_Losses_y'] = tmp[:, 0] / tmp[:, 1]
+    
+    forms_home = np.zeros(new_df.shape[0])
+    forms_away = np.zeros(new_df.shape[0])
+    for index, row in new_df.iterrows():
+        g_round = row['Round']
+        home_team = row['Home Team']
+        away_team = row['Away Team']
+        form_home = 0.
+        form_away = 0.
+        if g_round > 6:
+            form_home = standings[(standings['Club Name'] == home_team) &
+                                  (standings['Round'] == g_round-1)]['Wins'].values[0] -\
+                        standings[(standings['Club Name'] == home_team) &
+                                  (standings['Round'] == g_round-6)]['Wins'].values[0]
+    
+            form_away = standings[(standings['Club Name'] == away_team) &
+                                  (standings['Round'] == g_round-1)]['Wins'].values[0] -\
+                        standings[(standings['Club Name'] == away_team) &
+                                  (standings['Round'] == g_round-6)]['Wins'].values[0]
+        elif g_round > 1:
+            form_home = standings[(standings['Club Name'] == home_team) &
+                                   (standings['Round'] == g_round-1)]['Wins'].values[0]
+            form_away = standings[(standings['Club Name'] == away_team) &
+                                   (standings['Round'] == g_round-1)]['Wins'].values[0]
+        print(g_round, form_home, form_away)
+        forms_home[index] = form_home
+        forms_away[index] = form_away
+
+    new_df['form_x'] = forms_home
+    new_df['form_y'] = forms_away
+
+    new_df = new_df[['Round', 'Home Team', 'Away Team',
+                     'Position_x', 'Position_y', 
+                     'Offence_x', 'Offence_y',
+                     'Defence_x', 'Defence_y',
+#                     'Wins_to_Losses_x', 'Wins_to_Losses_y',
+                     'form_x', 'form_y']]
+    
+    return new_df
+
 def make_features(df, standings=None):
     '''game-level features:
         standing of home team

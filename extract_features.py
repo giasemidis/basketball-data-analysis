@@ -7,19 +7,17 @@ Created on Sun Apr  8 02:17:41 2018
 import numpy as np
 import pandas as pd
 import sys
-from auxiliary.make_standings import make_standings
-from auxiliary.make_features import  make_features
+from auxiliary.make_features import make_features_from_df
+#from auxiliary.make_standings import make_standings
+#from auxiliary.make_features import  make_features
 
-df = pd.read_csv('data/euroleague_season_2018_results-end.csv')
-#for i in range(1, 31):
-#    print(i)
-#    standing = make_standings(df, i)
+year = 2017
+data = pd.read_csv('data/euroleague_results_%d_%d.csv' % (year, year+1))
+standings = pd.read_csv('data/euroleague_standings_%d_%d.csv' % (year, year+1))
 
-standings = {}
-for i in range(1, 31):
-    standings[i] = make_standings(df, i)
-
-
+a = make_features_from_df(data, standings)
+a.to_csv('feat_test.csv')
+#%%
 features_df = make_features(df, standings=standings)
 features = features_df.values
 
