@@ -27,7 +27,10 @@ target = np.ones(features.shape[0], dtype=int)
 target[df['Home Score'] < df['Away Score']] = 2
 
 features_df.insert(loc=0, column='mach_id', value=df['Match ID'])
-features_df.insert(loc=1, column='label', value=target)
+features_df.insert(loc=1, column='Round', value=df['Game Round'])
+features_df.insert(loc=2, column='Home Team', value=df['Home Team'])
+features_df.insert(loc=3, column='Away Team', value=df['Away Team'])
+features_df.insert(loc=4, column='label', value=target)
 
 features_df.to_csv('data/match_level_features.csv', sep=',', index=False)
 
