@@ -69,11 +69,11 @@ def make_features(df, standings=None):
         form_home_team = find_form(df, game_round, home_team)
         form_away_team = find_form(df, game_round, away_team)
 
-        avg_attack_home_team = standing[standing['Team ID'] == home_team]['Score+'] / game_round
-        avg_attack_away_team = standing[standing['Team ID'] == away_team]['Score+'] / game_round
+        avg_attack_home_team = standing[standing['Team ID'] == home_team]['Score+'] / (game_round-1)
+        avg_attack_away_team = standing[standing['Team ID'] == away_team]['Score+'] / (game_round-1)
 
-        avg_defence_home_team = standing[standing['Team ID'] == home_team]['Score-'] / game_round
-        avg_defence_away_team = standing[standing['Team ID'] == away_team]['Score-'] / game_round
+        avg_defence_home_team = standing[standing['Team ID'] == home_team]['Score-'] / (game_round-1)
+        avg_defence_away_team = standing[standing['Team ID'] == away_team]['Score-'] / (game_round-1)
         home_team_inf4 = 1 if home_team in f4 else 0
         home_team_intop8 = 1 if home_team in top8 else 0
         home_team_inrest = 0 if (home_team_inf4 or home_team_intop8) else 1
