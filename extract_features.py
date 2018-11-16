@@ -16,7 +16,7 @@ data = pd.read_csv('data/euroleague_results_%d_%d.csv' % (year, year+1))
 standings = pd.read_csv('data/euroleague_standings_%d_%d.csv' % (year, year+1))
 
 a = make_features_from_df(data, standings)
-a.to_csv('feat_test.csv')
+a.to_csv('feat_test.csv', index=False)
 #%%
 features_df = make_features(df, standings=standings)
 features = features_df.values
