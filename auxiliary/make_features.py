@@ -62,30 +62,34 @@ def make_features_from_df(data, standings):
     
     forms_home = np.zeros(new_df.shape[0])
     forms_away = np.zeros(new_df.shape[0])
+    n_form_games = 5
     for index, row in new_df.iterrows():
         g_round = row['Round']
         home_team = row['Home Team']
         away_team = row['Away Team']
         form_home = 0.
         form_away = 0.
-        if g_round > 6:
+        den = 1
+        if g_round > n_form_games + 1:
             form_home = standings[(standings['Club Name'] == home_team) &
                                   (standings['Round'] == g_round-1)]['Wins'].values[0] -\
                         standings[(standings['Club Name'] == home_team) &
-                                  (standings['Round'] == g_round-6)]['Wins'].values[0]
+                                  (standings['Round'] == g_round-n_form_games-1)]['Wins'].values[0]
     
             form_away = standings[(standings['Club Name'] == away_team) &
                                   (standings['Round'] == g_round-1)]['Wins'].values[0] -\
                         standings[(standings['Club Name'] == away_team) &
-                                  (standings['Round'] == g_round-6)]['Wins'].values[0]
+                                  (standings['Round'] == g_round-n_form_games-1)]['Wins'].values[0]
+            den = n_form_games
         elif g_round > 1:
             form_home = standings[(standings['Club Name'] == home_team) &
                                    (standings['Round'] == g_round-1)]['Wins'].values[0]
             form_away = standings[(standings['Club Name'] == away_team) &
                                    (standings['Round'] == g_round-1)]['Wins'].values[0]
-        print(g_round, form_home, form_away)
-        forms_home[index] = form_home
-        forms_away[index] = form_away
+            den = g_round-1
+#        print(g_round, form_home, form_away)
+        forms_home[index] = form_home / den
+        forms_away[index] = form_away / den
 
     new_df['form_x'] = forms_home
     new_df['form_y'] = forms_away
