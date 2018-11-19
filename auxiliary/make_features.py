@@ -200,20 +200,36 @@ def make_features(df, standings=None):
     return df
 
 
-def make_team_features(game_feat_df):
-    df1 = pd.DataFrame()
-    df2 = pd.DataFrame()
-    home_game = np.ones(game_feat_df.shape[0], dtype=int)
-    away_game = np.zeros(game_feat_df.shape[0], dtype=int)
-    for u in game_feat_df.keys():
-        if 'home-team' in u:
-            df1[u.replace('home-team', '')] = game_feat_df[u]
-        elif 'away-team' in u:
-            df2[u.replace('away-team', '')] = game_feat_df[u]
-        else:
-            print('Warning: Something went wrong')
+def make_team_features(data, standings):
+    game_feats = make_features_from_df(data, standings)
 
-    features_df = pd.concat([df1, df2])
-    home_games = np.concatenate((home_game, away_game), axis=0)
-    features_df['Home Team'] = home_games
-    return features_df
+    if 'Label' not in game_feats.keys():
+        label = np.where(data['Home Score'] > data['Away Score'], 1, 2)
+        game_feats.insert(3, 'Label', label)
+
+    home = game_feats[['Round', 'Home Team', 'Position_x', 
+                        'Offence_x', 'Defence_x', 'form_x']]
+    home = home.rename(index=str, columns={'Home Team': 'Team', 
+                                           'Position_x': 'Position',
+                                           'Offence_x': 'Offence',
+                                           'Defence_x': 'Defence',
+                                           'form_x': 'form'})
+    home.insert(2, 'Label', np.where(game_feats['Label'].values==1, 1, 0))
+    home.insert(3, 'Home', 1)
+    home.insert(4, 'Away', 0)
+
+    away = game_feats[['Round', 'Away Team', 'Position_y', 
+                        'Offence_y', 'Defence_y', 'form_y']]
+    away = away.rename(index=str, columns={'Away Team': 'Team', 
+                                           'Position_y': 'Position',
+                                           'Offence_y': 'Offence',
+                                           'Defence_y': 'Defence',
+                                           'form_y': 'form'})
+    away.insert(2, 'Label', np.where(game_feats['Label'].values==2, 1, 0))
+    away.insert(3, 'Home', 0)
+    away.insert(4, 'Away', 1)
+    
+    team_feats = pd.concat([home, away])
+    team_feats.sort_values(by=['Round', 'Team'], inplace=True)
+    
+    return team_feats
