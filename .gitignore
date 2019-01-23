@@ -1,2 +1,11 @@
-notes
+# local files
+*.txt
+*.csv
+notebook*.py
+*.npz
+*.npY
+
+# local folders
+data
 __pycache__
+
