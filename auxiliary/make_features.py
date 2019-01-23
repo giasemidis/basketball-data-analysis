@@ -10,6 +10,10 @@ from auxiliary.make_standings import make_standings
 
 
 def find_form(df, game_round, team_id):
+    '''
+    Finds the form of a team, i.e. the ratio of winning games over the last 5
+    games.
+    '''
     form = np.nan
     team_df = df[((df['Home Team ID'] == team_id) | 
                  (df['Away Team ID'] == team_id)) &
@@ -200,34 +204,38 @@ def make_features(df, standings=None):
     return df
 
 
-def make_team_features(data, standings):
+def make_team_features(data, standings, year=None):
     game_feats = make_features_from_df(data, standings)
 
     if 'Label' not in game_feats.keys():
         label = np.where(data['Home Score'] > data['Away Score'], 1, 2)
         game_feats.insert(3, 'Label', label)
 
-    home = game_feats[['Round', 'Home Team', 'Position_x', 
-                        'Offence_x', 'Defence_x', 'form_x']]
+    game_id = [np.abs(hash(x['Home Team']+x['Away Team']+str(year))) for
+                           indx, x in game_feats.iterrows()]
+    game_feats['Game ID'] = game_id
+
+    home = game_feats[['Round', 'Game ID', 'Home Team', 'Position_x', 
+                       'Offence_x', 'Defence_x', 'form_x']]
     home = home.rename(index=str, columns={'Home Team': 'Team', 
                                            'Position_x': 'Position',
                                            'Offence_x': 'Offence',
                                            'Defence_x': 'Defence',
                                            'form_x': 'form'})
-    home.insert(2, 'Label', np.where(game_feats['Label'].values==1, 1, 0))
-    home.insert(3, 'Home', 1)
-    home.insert(4, 'Away', 0)
+    home.insert(3, 'Label', np.where(game_feats['Label'].values==1, 1, 0))
+    home.insert(4, 'Home', 1)
+    home.insert(5, 'Away', 0)
 
-    away = game_feats[['Round', 'Away Team', 'Position_y', 
+    away = game_feats[['Round', 'Game ID', 'Away Team', 'Position_y', 
                         'Offence_y', 'Defence_y', 'form_y']]
     away = away.rename(index=str, columns={'Away Team': 'Team', 
                                            'Position_y': 'Position',
                                            'Offence_y': 'Offence',
                                            'Defence_y': 'Defence',
                                            'form_y': 'form'})
-    away.insert(2, 'Label', np.where(game_feats['Label'].values==2, 1, 0))
-    away.insert(3, 'Home', 0)
-    away.insert(4, 'Away', 1)
+    away.insert(3, 'Label', np.where(game_feats['Label'].values==2, 1, 0))
+    away.insert(4, 'Home', 0)
+    away.insert(5, 'Away', 1)
     
     team_feats = pd.concat([home, away])
     team_feats.sort_values(by=['Round', 'Team'], inplace=True)
