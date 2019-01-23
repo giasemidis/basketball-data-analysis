@@ -33,8 +33,11 @@ min_round = 5
 print('norm: %r - shuffle: %r - merge: %r - method: %s' % 
       (norm, shuffle, merge, method))
 
-df1 = pd.read_csv('data/match_level_features_2016_2017.csv')
-df2 = pd.read_csv('data/match_level_features_2017_2018.csv')
+#df1 = pd.read_csv('data/match_level_features_2016_2017.csv')
+#df2 = pd.read_csv('data/match_level_features_2017_2018.csv')
+
+df1 = pd.read_csv('data/team_level_features_2016_2017.csv')
+df2 = pd.read_csv('data/team_level_features_2017_2018.csv')
 
 #df1, df2 = fix_team_names(df1, df2)
 #%%
@@ -76,7 +79,7 @@ for train_index, test_index in skfold.split(X_train, y_train):
     print(i)
     X_train_folds, X_test_fold = X_train[train_index,:], X_train[test_index,:]
     y_train_folds, y_test_fold = y_train[train_index], y_train[test_index]
-    w = sample_weights(y_test_fold-1, 2)
+    w = sample_weights(y_test_fold, 2)
     
     for j, param in enumerate(params):
         for k, g in enumerate(gammas):
@@ -94,6 +97,8 @@ for train_index, test_index in skfold.split(X_train, y_train):
 mean_acc = np.mean(accuracy, axis=0)
 mean_w_acc = np.mean(w_accuracy, axis=0)
 
+np.savez('svm-rbf', accuracy=accuracy, w_accuracy=w_accuracy, Cs=params,
+         gammas=gammas)
 #%%
 plt.figure()
 plt.imshow(mean_acc)

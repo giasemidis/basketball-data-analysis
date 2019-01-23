@@ -25,9 +25,9 @@ def normalise(X):
     return x_norm
 
 norm = True
-shuffle = False
-merge = True
-method = 'naive-bayes'
+shuffle = True
+merge = False
+method = 'log-reg'
 min_round = 5
 
 print('norm: %r - shuffle: %r - merge: %r - method: %s' % 
@@ -36,6 +36,9 @@ print('norm: %r - shuffle: %r - merge: %r - method: %s' %
 df1 = pd.read_csv('data/match_level_features_2016_2017.csv')
 df2 = pd.read_csv('data/match_level_features_2017_2018.csv')
 
+#df1 = pd.read_csv('data/team_level_features_2016_2017.csv')
+#df2 = pd.read_csv('data/team_level_features_2017_2018.csv')
+
 #df1, df2 = fix_team_names(df1, df2)
 #%%
 
@@ -43,15 +46,21 @@ n = list(df1.columns).index('Label')
 ii = df1['Round'].values > min_round
 y_train = df1[ii]['Label'].values
 X_train = df1.iloc[ii, (n+1):].values
+df_train = df1[ii]
 
 n = list(df2.columns).index('Label')
 ii = df2['Round'].values > min_round
 y_test = df2[ii]['Label'].values
 X_test = df2.iloc[ii, (n+1):].values
+df_test = df2[ii]
 
 if merge:
     X_train = np.concatenate((X_train, X_test), axis=0)
     y_train = np.concatenate((y_train, y_test), axis=0)
+    df_train = pd.concat([df_train, df_test], ignore_index=True)
+
+if 2 in np.unique(y_train):
+    y_train = y_train - 1
 
 if norm:
     X_train = normalise(X_train)
@@ -85,7 +94,8 @@ for train_index, test_index in skfold.split(X_train, y_train):
     print(i)
     X_train_folds, X_test_fold = X_train[train_index, :], X_train[test_index, :]
     y_train_folds, y_test_fold = y_train[train_index], y_train[test_index]
-    w = sample_weights(y_test_fold-1, 2)
+    df_test_fold = df_train.iloc[test_index, :].copy()
+    w = sample_weights(y_test_fold, 2)
     
     for j, param in enumerate(params):
     
@@ -104,6 +114,21 @@ for train_index, test_index in skfold.split(X_train, y_train):
 
         model.fit(X_train_folds, y_train_folds)
         y_pred = model.predict(X_test_fold)
+#        y_pred_prob = model.predict_proba(X_test_fold)
+#        df_test_fold['Prob'] = y_pred_prob[:, 1]
+#        y_test_fold = []
+#        y_pred = []
+#        for gid in np.unique(df_test_fold['Game ID']):
+#            teams = df_test_fold[df_test_fold['Game ID']==gid]
+#            if teams.shape[0] == 2:
+#                game_pred = 1 if teams.iloc[0]['Prob'] > teams.iloc[1]['Prob'] else 0
+#                game_resu = 1 if teams.iloc[0]['Label'] > teams.iloc[0]['Label'] else 0
+#                y_test_fold.append(game_resu)
+#                y_pred.append(game_pred)
+#        y_test_fold = np.array(y_test_fold)
+#        y_pred = np.array(y_pred)
+#        w = sample_weights(y_test_fold, 2)
+        
         accuracy[i, j] = accuracy_score(y_test_fold, y_pred)
         w_accuracy[i, j] = accuracy_score(y_test_fold, y_pred, sample_weight=w)
 
