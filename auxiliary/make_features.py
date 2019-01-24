@@ -58,6 +58,8 @@ def make_features_from_df(data, standings):
     tmp /= np.repeat((new_df['Round'].values - 1)[:, np.newaxis], tmp.shape[1], axis=1)
 
     new_df[['Offence_x', 'Offence_y', 'Defence_x', 'Defence_y']] = tmp
+    new_df['Diff_x'] = new_df['Offence_x'] - new_df['Defence_x']
+    new_df['Diff_y'] = new_df['Offence_y'] - new_df['Defence_y']
 
 #    tmp = new_df[['Wins_x', 'Losses_x']].values
 #    new_df['Wins_to_Losses_x'] = tmp[:, 0] / tmp[:, 1]
@@ -103,7 +105,8 @@ def make_features_from_df(data, standings):
                      'Offence_x', 'Offence_y',
                      'Defence_x', 'Defence_y',
 #                     'Wins_to_Losses_x', 'Wins_to_Losses_y',
-                     'form_x', 'form_y']]
+                     'form_x', 'form_y',
+                     'Diff_x', 'Diff_y']]
     
     return new_df
 
@@ -222,6 +225,7 @@ def make_team_features(data, standings, year=None):
                                            'Offence_x': 'Offence',
                                            'Defence_x': 'Defence',
                                            'form_x': 'form'})
+    home['Diff'] = home['Offence'] - home['Defence']
     home.insert(3, 'Label', np.where(game_feats['Label'].values==1, 1, 0))
     home.insert(4, 'Home', 1)
     home.insert(5, 'Away', 0)
@@ -233,6 +237,7 @@ def make_team_features(data, standings, year=None):
                                            'Offence_y': 'Offence',
                                            'Defence_y': 'Defence',
                                            'form_y': 'form'})
+    away['Diff'] = away['Offence'] - away['Defence']
     away.insert(3, 'Label', np.where(game_feats['Label'].values==2, 1, 0))
     away.insert(4, 'Home', 0)
     away.insert(5, 'Away', 1)
