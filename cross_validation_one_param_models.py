@@ -6,66 +6,42 @@ Created on Sun Sep 23 23:32:58 2018
 """
 
 import numpy as np
-import pandas as pd
 import sys
 from sklearn.linear_model import LogisticRegression
 from sklearn.ensemble import RandomForestClassifier
 from sklearn.tree import DecisionTreeClassifier
 from sklearn.svm import SVC
 from sklearn.naive_bayes import GaussianNB
-from sklearn.model_selection import StratifiedKFold
-from sklearn.ensemble import GradientBoostingClassifier
-from sklearn.metrics import accuracy_score
+from sklearn.ensemble import GradientBoostingClassifier, AdaBoostClassifier
+from sklearn.neighbors import KNeighborsClassifier
+from sklearn.discriminant_analysis import QuadraticDiscriminantAnalysis
 from matplotlib import pyplot as plt
-from auxiliary.sample_weights import sample_weights
-from auxiliary.fix_team_names import fix_team_names
+from auxiliary.data_processing import load_data, shape_data
+from auxiliary.kfold_crosseval import kfold_crosseval
 
-def normalise(X):
-    x_norm = (X - X.min(axis=0)) / (X.max(axis=0) - X.min(axis=0))
-    return x_norm
-
+# settings
+level = 'match'
 norm = True
 shuffle = True
-merge = False
-method = 'log-reg'
+merge = True
+year = 2017
+method = 'naive-bayes'
 min_round = 5
+nsplits = 5
 
-print('norm: %r - shuffle: %r - merge: %r - method: %s' % 
-      (norm, shuffle, merge, method))
+print('level: %s - norm: %r - shuffle: %r - merge: %r - method: %s' % 
+      (level, norm, shuffle, merge, method))
 
-df1 = pd.read_csv('data/match_level_features_2016_2017.csv')
-df2 = pd.read_csv('data/match_level_features_2017_2018.csv')
+#%% load data
+df = load_data(level)
 
-#df1 = pd.read_csv('data/team_level_features_2016_2017.csv')
-#df2 = pd.read_csv('data/team_level_features_2017_2018.csv')
+#%% Re-shape data
+X_train, y_train, df, init_feat, n_feats, groups = shape_data(df, norm=norm, 
+                                                        min_round=min_round)
+print('Number of feaures:', X_train.shape[1], init_feat)
+print('Number of obs:', X_train.shape[0])
 
-#df1, df2 = fix_team_names(df1, df2)
-#%%
-
-n = list(df1.columns).index('Label')
-ii = df1['Round'].values > min_round
-y_train = df1[ii]['Label'].values
-X_train = df1.iloc[ii, (n+1):].values
-df_train = df1[ii]
-
-n = list(df2.columns).index('Label')
-ii = df2['Round'].values > min_round
-y_test = df2[ii]['Label'].values
-X_test = df2.iloc[ii, (n+1):].values
-df_test = df2[ii]
-
-if merge:
-    X_train = np.concatenate((X_train, X_test), axis=0)
-    y_train = np.concatenate((y_train, y_test), axis=0)
-    df_train = pd.concat([df_train, df_test], ignore_index=True)
-
-if 2 in np.unique(y_train):
-    y_train = y_train - 1
-
-if norm:
-    X_train = normalise(X_train)
-    X_test = normalise(X_test)
-    
+#%% Set parameters    
 if method == 'log-reg':
     params = np.sort(np.concatenate((np.logspace(-5, 8, 14),
                                      5*np.logspace(-5, 8, 14)), axis=0))
@@ -80,67 +56,58 @@ elif method == 'naive-bayes':
     params = np.array([0])
 elif method == 'gradient-boosting':
     params = np.arange(10, 200, 10)
+elif method == 'ada':
+    params = np.arange(10, 200, 10)
+elif method == 'knn':
+    params = np.arange(3, 30, 2)
+elif method == 'distriminant-analysis': 
+    params = np.array([0])
 else:
     sys.exit('Method not recognised')
 
-skfold = StratifiedKFold(n_splits=5, shuffle=shuffle, random_state=10)
+#%% Tune parameters
+accuracy = np.zeros(params.shape[0])
+w_accuracy = np.zeros(params.shape[0])
 
-accuracy = np.zeros((skfold.get_n_splits(), params.shape[0]))
-w_accuracy = np.zeros((skfold.get_n_splits(), params.shape[0]))
+for j, param in enumerate(params):
+     
+    # update model's parameters
+    if method == 'log-reg':
+        model = LogisticRegression(C=param, class_weight='balanced')
+    elif method == 'svm-linear':
+        model = SVC(C=param, kernel='linear', class_weight='balanced')
+    elif method == 'decision-tree':
+        model = DecisionTreeClassifier(class_weight='balanced')
+    elif method == 'random-forest':
+        model = RandomForestClassifier(n_estimators=param, class_weight='balanced')
+    elif method == 'naive-bayes':
+        model = GaussianNB()
+    elif method == 'gradient-boosting':
+        model = GradientBoostingClassifier(n_estimators=param)
+    elif method == 'ada':
+        model = AdaBoostClassifier(n_estimators=param)
+    elif method == 'knn':
+        model = KNeighborsClassifier(n_neighbors=param)
+    elif method == 'distriminant-analysis': 
+        model = QuadraticDiscriminantAnalysis()
 
-i = -1
-for train_index, test_index in skfold.split(X_train, y_train):
-    i+=1
-    print(i)
-    X_train_folds, X_test_fold = X_train[train_index, :], X_train[test_index, :]
-    y_train_folds, y_test_fold = y_train[train_index], y_train[test_index]
-    df_test_fold = df_train.iloc[test_index, :].copy()
-    w = sample_weights(y_test_fold, 2)
-    
-    for j, param in enumerate(params):
-    
-        if method == 'log-reg':
-            model = LogisticRegression(C=param, class_weight='balanced')
-        elif method == 'svm-linear':
-            model = SVC(C=param, kernel='linear', class_weight='balanced')
-        elif method == 'decision-tree':
-            model = DecisionTreeClassifier(class_weight='balanced')
-        elif method == 'random-forest':
-            model = RandomForestClassifier(n_estimators=param, class_weight='balanced')
-        elif method == 'naive-bayes':
-            model = GaussianNB()
-        elif method == 'gradient-boosting':
-            model = GradientBoostingClassifier(n_estimators=param)
+    # apply k-fold cross validation
+    accuracy[j], w_accuracy[j] = kfold_crosseval(X_train, y_train, 
+                                                 df, nsplits, groups=groups, 
+                                                 model=model, level=level, 
+                                                 shuffle=shuffle)
 
-        model.fit(X_train_folds, y_train_folds)
-        y_pred = model.predict(X_test_fold)
-#        y_pred_prob = model.predict_proba(X_test_fold)
-#        df_test_fold['Prob'] = y_pred_prob[:, 1]
-#        y_test_fold = []
-#        y_pred = []
-#        for gid in np.unique(df_test_fold['Game ID']):
-#            teams = df_test_fold[df_test_fold['Game ID']==gid]
-#            if teams.shape[0] == 2:
-#                game_pred = 1 if teams.iloc[0]['Prob'] > teams.iloc[1]['Prob'] else 0
-#                game_resu = 1 if teams.iloc[0]['Label'] > teams.iloc[0]['Label'] else 0
-#                y_test_fold.append(game_resu)
-#                y_pred.append(game_pred)
-#        y_test_fold = np.array(y_test_fold)
-#        y_pred = np.array(y_pred)
-#        w = sample_weights(y_test_fold, 2)
-        
-        accuracy[i, j] = accuracy_score(y_test_fold, y_pred)
-        w_accuracy[i, j] = accuracy_score(y_test_fold, y_pred, sample_weight=w)
-
+#%% Plots
 if params.shape[0] > 1:
     plt.figure()
-    plt.plot(params, accuracy.mean(axis=0), label='accuracy')
-    plt.plot(params, w_accuracy.mean(axis=0), label='w_accuracy')
+    plt.plot(params, accuracy, label='accuracy')
+    plt.plot(params, w_accuracy, label='w_accuracy')
     if method in ['log-reg', 'svm-linear']:
         plt.xscale('log')
     plt.xlabel('parameter')
     plt.ylabel('Score')
     plt.legend()
+    plt.title(method)
 else:
     print('Accuracy: ', accuracy.mean(axis=0))
     print('Weighted Accuracy: ', w_accuracy.mean(axis=0))
