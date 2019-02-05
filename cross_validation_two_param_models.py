@@ -6,105 +6,73 @@ Created on Sun Sep 23 23:32:58 2018
 """
 
 import numpy as np
-import pandas as pd
 import sys
-from sklearn.linear_model import LogisticRegression
-from sklearn.ensemble import RandomForestClassifier
-from sklearn.tree import DecisionTreeClassifier
-from sklearn.svm import SVC
-from sklearn.naive_bayes import GaussianNB
-from sklearn.model_selection import StratifiedKFold
-from sklearn.ensemble import GradientBoostingClassifier
-from sklearn.metrics import accuracy_score
 from matplotlib import pyplot as plt
-from auxiliary.sample_weights import sample_weights
-from auxiliary.fix_team_names import fix_team_names
+from sklearn.svm import SVC
+from sklearn.ensemble import AdaBoostClassifier
+from auxiliary.data_processing import load_data, shape_data
+from auxiliary.kfold_crosseval import kfold_crosseval
 
-def normalise(X):
-    x_norm = (X - X.min(axis=0)) / (X.max(axis=0) - X.min(axis=0))
-    return x_norm
-
-norm = False
-shuffle = False
-merge = True
-method = 'svm-rbf'
+# settings
+level = 'match'
+norm = True
+shuffle = True
+method = 'ada'
 min_round = 5
+nsplits = 5
 
-print('norm: %r - shuffle: %r - merge: %r - method: %s' % 
-      (norm, shuffle, merge, method))
+print('norm: %r - shuffle: %r - method: %s' % 
+      (norm, shuffle, method))
 
-#df1 = pd.read_csv('data/match_level_features_2016_2017.csv')
-#df2 = pd.read_csv('data/match_level_features_2017_2018.csv')
+#%% load data
+df = load_data(level)
 
-df1 = pd.read_csv('data/team_level_features_2016_2017.csv')
-df2 = pd.read_csv('data/team_level_features_2017_2018.csv')
+#%% Re-shape data
+X_train, y_train, df, init_feat, n_feats, groups = shape_data(df, norm=norm, 
+                                                        min_round=min_round)
 
-#df1, df2 = fix_team_names(df1, df2)
-#%%
+print('Number of feaures:', X_train.shape[1], init_feat)
+print('Number of obs:', X_train.shape[0])
 
-n = list(df1.columns).index('Label')
-ii = df1['Round'].values > min_round
-y_train = df1[ii]['Label'].values
-X_train = df1.iloc[ii, (n+1):].values
-
-n = list(df2.columns).index('Label')
-ii = df2['Round'].values > min_round
-y_test = df2[ii]['Label'].values
-X_test = df2.iloc[ii, (n+1):].values
-
-if merge:
-    X_train = np.concatenate((X_train, X_test), axis=0)
-    y_train = np.concatenate((y_train, y_test), axis=0)
-
-if norm:
-    X_train = normalise(X_train)
-    X_test = normalise(X_test)
-    
+#%% Set parameters
 if method == 'svm-rbf':
-    params = np.sort(np.concatenate((np.logspace(-5, 8, 14),
+    params1 = np.sort(np.concatenate((np.logspace(-5, 8, 14),
                                      5*np.logspace(-5, 8, 14)), axis=0))
-    gammas = np.sort(np.concatenate((np.logspace(-5, 8, 14),
+    params2 = np.sort(np.concatenate((np.logspace(-5, 8, 14),
                                      5*np.logspace(-5, 8, 14)), axis=0))
+elif method == 'ada':
+    params1 = np.arange(5, 200, 1)
+    params2 = np.arange(0.3, 1.5, 0.1)
 else:
     sys.exit('Method not recognised')
 
-skfold = StratifiedKFold(n_splits=5, shuffle=shuffle, random_state=10)
+#%% Tune parameters
+accuracy = np.zeros((params1.shape[0], params1.shape[0]))
+w_accuracy = np.zeros((params1.shape[0], params2.shape[0]))
 
-accuracy = np.zeros((skfold.get_n_splits(), params.shape[0], gammas.shape[0]))
-w_accuracy = np.zeros((skfold.get_n_splits(), params.shape[0], gammas.shape[0]))
+for i, param1 in enumerate(params1):
+    for j, param2 in enumerate(params2):
+        
+        if method == 'svm-rbf':
+            model = SVC(C=param1, kernel='rbf', gamma=param2,
+                        class_weight='balanced')
+        elif method == 'ada':
+            model = AdaBoostClassifier(n_estimators=param1, random_state=10,
+                                       learning_rate=param2)
 
-i = -1
-for train_index, test_index in skfold.split(X_train, y_train):
-    i+=1
-    print(i)
-    X_train_folds, X_test_fold = X_train[train_index,:], X_train[test_index,:]
-    y_train_folds, y_test_fold = y_train[train_index], y_train[test_index]
-    w = sample_weights(y_test_fold, 2)
-    
-    for j, param in enumerate(params):
-        for k, g in enumerate(gammas):
-            
-            if method == 'svm-rbf':
-                model = SVC(C=param, kernel='rbf', gamma=g,
-                            class_weight='balanced')
+            # apply k-fold cross validation
+            accuracy[i, j], w_accuracy[i, j] = kfold_crosseval(X_train, y_train, 
+                                                df, nsplits, groups=groups, 
+                                                model=model, level=level, 
+                                                shuffle=shuffle)
 
-                model.fit(X_train_folds, y_train_folds)
-                y_pred = model.predict(X_test_fold)
-                accuracy[i, j, k] = accuracy_score(y_test_fold, y_pred)
-                w_accuracy[i, j, k] = accuracy_score(y_test_fold, y_pred,
-                                                     sample_weight=w)
-
-mean_acc = np.mean(accuracy, axis=0)
-mean_w_acc = np.mean(w_accuracy, axis=0)
-
-np.savez('svm-rbf', accuracy=accuracy, w_accuracy=w_accuracy, Cs=params,
-         gammas=gammas)
+np.savez('ouotput/%s' %method, accuracy=accuracy, w_accuracy=w_accuracy, 
+         params2=params1, params1=params2)
 #%%
 plt.figure()
-plt.imshow(mean_acc)
+plt.imshow(accuracy)
 plt.colorbar()
 
 plt.figure()
-plt.imshow(mean_w_acc)
+plt.imshow(w_accuracy)
 plt.colorbar()
-
