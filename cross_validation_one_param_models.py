@@ -23,7 +23,7 @@ from auxiliary.kfold_crosseval import kfold_crosseval
 level = 'match'
 norm = True
 shuffle = True
-method = 'decision-tree'
+method = 'log-reg'
 min_round = 5
 nsplits = 5
 
@@ -66,7 +66,6 @@ else:
 #%% Tune parameters
 accuracy = np.zeros(params.shape[0])
 w_accuracy = np.zeros(params.shape[0])
-roc_auc = np.zeros(params.shape[0])
 
 for j, param in enumerate(params):
      
@@ -92,7 +91,7 @@ for j, param in enumerate(params):
         model = QuadraticDiscriminantAnalysis()
 
     # apply k-fold cross validation
-    accuracy[j], w_accuracy[j], roc_auc[j] = kfold_crosseval(X_train, y_train, 
+    accuracy[j], w_accuracy[j] = kfold_crosseval(X_train, y_train, 
                                                  df, nsplits, groups=groups, 
                                                  model=model, level=level, 
                                                  shuffle=shuffle)
@@ -102,7 +101,6 @@ if params.shape[0] > 1:
     plt.figure()
     plt.plot(params, accuracy, label='accuracy')
     plt.plot(params, w_accuracy, label='w_accuracy')
-    plt.plot(params, roc_auc, label='roc-auc')
     if method in ['log-reg', 'svm-linear']:
         plt.xscale('log')
     plt.xlabel('parameter')
@@ -112,4 +110,3 @@ if params.shape[0] > 1:
 else:
     print('Accuracy: ', accuracy.mean(axis=0))
     print('Weighted Accuracy: ', w_accuracy.mean(axis=0))
-    print('Accuracy: ', roc_auc.mean(axis=0))
