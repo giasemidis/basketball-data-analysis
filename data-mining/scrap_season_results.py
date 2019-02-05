@@ -56,7 +56,7 @@ def main(season):
     print('Convert to dataframe')
     df = pd.DataFrame(results, columns=headers)
     print('Save to file')
-    df.to_csv('data/euroleague_results_%s.csv' % season, index=False)
+    df.to_csv('../data/euroleague_results_%s2.csv' % season, index=False)
 
     return
 
