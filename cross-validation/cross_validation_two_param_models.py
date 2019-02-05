@@ -48,7 +48,7 @@ else:
     sys.exit('Method not recognised')
 
 #%% Tune parameters
-accuracy = np.zeros((params1.shape[0], params1.shape[0]))
+accuracy = np.zeros((params1.shape[0], params2.shape[0]))
 w_accuracy = np.zeros((params1.shape[0], params2.shape[0]))
 
 for i, param1 in enumerate(params1):
@@ -68,8 +68,11 @@ for i, param1 in enumerate(params1):
                                                 shuffle=shuffle)
 
 np.savez('output/%s' %method, accuracy=accuracy, w_accuracy=w_accuracy, 
-         params2=params1, params1=params2)
+         params1=params1, params2=params2)
 #%%
+s = np.load('../output/%s.npz' %method)
+accuracy = s['accuracy']
+w_accuracy = s['w_accuracy']
 plt.figure()
 plt.imshow(accuracy)
 plt.colorbar()
