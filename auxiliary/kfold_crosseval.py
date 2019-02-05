@@ -7,7 +7,7 @@ Created on Sat Feb  2 22:51:12 2019
 import numpy as np
 from sklearn.model_selection import StratifiedKFold, GroupKFold
 from sklearn.naive_bayes import GaussianNB
-from sklearn.metrics import accuracy_score, balanced_accuracy_score, roc_auc_score
+from sklearn.metrics import accuracy_score, balanced_accuracy_score
 
 
 def kfold_crosseval(X_train, y_train, df_train, nsplits, groups=None, 
@@ -21,7 +21,6 @@ def kfold_crosseval(X_train, y_train, df_train, nsplits, groups=None,
 
     accuracy = np.zeros(kfold.get_n_splits())
     w_accuracy = np.zeros(kfold.get_n_splits()) 
-    roc_auc = np.zeros(kfold.get_n_splits())
     i = -1
     for train_index, test_index in folditer:
         #loop over folds
@@ -53,11 +52,9 @@ def kfold_crosseval(X_train, y_train, df_train, nsplits, groups=None,
         else:
             # predict model
             y_pred = model.predict(X_test_fold)
-            y_pred_prob = model.predict_proba(X_test_fold)
             
         accuracy[i] = accuracy_score(y_test_fold, y_pred)
         w_accuracy[i] = balanced_accuracy_score(y_test_fold, y_pred)
-        roc_auc[i] = roc_auc_score(y_test_fold, y_pred_prob)
 
-    return accuracy.mean(), w_accuracy.mean(), roc_auc.mean()
+    return accuracy.mean(), w_accuracy.mean()
     

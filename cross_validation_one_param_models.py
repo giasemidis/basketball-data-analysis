@@ -7,6 +7,7 @@ Created on Sun Sep 23 23:32:58 2018
 
 import numpy as np
 import sys
+from matplotlib import pyplot as plt
 from sklearn.linear_model import LogisticRegression
 from sklearn.ensemble import RandomForestClassifier
 from sklearn.tree import DecisionTreeClassifier
@@ -15,7 +16,6 @@ from sklearn.naive_bayes import GaussianNB
 from sklearn.ensemble import GradientBoostingClassifier, AdaBoostClassifier
 from sklearn.neighbors import KNeighborsClassifier
 from sklearn.discriminant_analysis import QuadraticDiscriminantAnalysis
-from matplotlib import pyplot as plt
 from auxiliary.data_processing import load_data, shape_data
 from auxiliary.kfold_crosseval import kfold_crosseval
 
@@ -23,14 +23,12 @@ from auxiliary.kfold_crosseval import kfold_crosseval
 level = 'match'
 norm = True
 shuffle = True
-merge = True
-year = 2017
-method = 'naive-bayes'
+method = 'decision-tree'
 min_round = 5
 nsplits = 5
 
-print('level: %s - norm: %r - shuffle: %r - merge: %r - method: %s' % 
-      (level, norm, shuffle, merge, method))
+print('level: %s - norm: %r - shuffle: %r - method: %s' % 
+      (level, norm, shuffle, method))
 
 #%% load data
 df = load_data(level)
@@ -57,10 +55,10 @@ elif method == 'naive-bayes':
 elif method == 'gradient-boosting':
     params = np.arange(10, 200, 10)
 elif method == 'ada':
-    params = np.arange(10, 200, 10)
+    params = np.arange(5, 200, 3)
 elif method == 'knn':
     params = np.arange(3, 30, 2)
-elif method == 'distriminant-analysis': 
+elif method == 'discriminant-analysis': 
     params = np.array([0])
 else:
     sys.exit('Method not recognised')
@@ -68,31 +66,33 @@ else:
 #%% Tune parameters
 accuracy = np.zeros(params.shape[0])
 w_accuracy = np.zeros(params.shape[0])
+roc_auc = np.zeros(params.shape[0])
 
 for j, param in enumerate(params):
      
     # update model's parameters
     if method == 'log-reg':
-        model = LogisticRegression(C=param, class_weight='balanced')
+        model = LogisticRegression(C=param, solver='liblinear', class_weight='balanced')
     elif method == 'svm-linear':
         model = SVC(C=param, kernel='linear', class_weight='balanced')
     elif method == 'decision-tree':
-        model = DecisionTreeClassifier(class_weight='balanced')
+        model = DecisionTreeClassifier(class_weight='balanced', random_state=10)
     elif method == 'random-forest':
-        model = RandomForestClassifier(n_estimators=param, class_weight='balanced')
+        model = RandomForestClassifier(n_estimators=param, class_weight='balanced', random_state=10)
     elif method == 'naive-bayes':
         model = GaussianNB()
     elif method == 'gradient-boosting':
-        model = GradientBoostingClassifier(n_estimators=param)
+        model = GradientBoostingClassifier(n_estimators=param, random_state=10)
     elif method == 'ada':
-        model = AdaBoostClassifier(n_estimators=param)
+        model = AdaBoostClassifier(n_estimators=param, random_state=10,
+                                   learning_rate=0.6)
     elif method == 'knn':
         model = KNeighborsClassifier(n_neighbors=param)
     elif method == 'distriminant-analysis': 
         model = QuadraticDiscriminantAnalysis()
 
     # apply k-fold cross validation
-    accuracy[j], w_accuracy[j] = kfold_crosseval(X_train, y_train, 
+    accuracy[j], w_accuracy[j], roc_auc[j] = kfold_crosseval(X_train, y_train, 
                                                  df, nsplits, groups=groups, 
                                                  model=model, level=level, 
                                                  shuffle=shuffle)
@@ -102,6 +102,7 @@ if params.shape[0] > 1:
     plt.figure()
     plt.plot(params, accuracy, label='accuracy')
     plt.plot(params, w_accuracy, label='w_accuracy')
+    plt.plot(params, roc_auc, label='roc-auc')
     if method in ['log-reg', 'svm-linear']:
         plt.xscale('log')
     plt.xlabel('parameter')
@@ -111,3 +112,4 @@ if params.shape[0] > 1:
 else:
     print('Accuracy: ', accuracy.mean(axis=0))
     print('Weighted Accuracy: ', w_accuracy.mean(axis=0))
+    print('Accuracy: ', roc_auc.mean(axis=0))
