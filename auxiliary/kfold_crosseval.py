@@ -6,9 +6,8 @@ Created on Sat Feb  2 22:51:12 2019
 """
 import numpy as np
 from sklearn.model_selection import StratifiedKFold, GroupKFold
-from auxiliary.sample_weights import sample_weights
 from sklearn.naive_bayes import GaussianNB
-from sklearn.metrics import accuracy_score
+from sklearn.metrics import accuracy_score, balanced_accuracy_score, roc_auc_score
 
 
 def kfold_crosseval(X_train, y_train, df_train, nsplits, groups=None, 
@@ -21,18 +20,16 @@ def kfold_crosseval(X_train, y_train, df_train, nsplits, groups=None,
         folditer = kfold.split(X_train, y_train)
 
     accuracy = np.zeros(kfold.get_n_splits())
-    w_accuracy = np.zeros(kfold.get_n_splits())     
+    w_accuracy = np.zeros(kfold.get_n_splits()) 
+    roc_auc = np.zeros(kfold.get_n_splits())
     i = -1
     for train_index, test_index in folditer:
         #loop over folds
         i+=1
-#        print(i)
         X_train_folds, X_test_fold = X_train[train_index, :], X_train[test_index, :]
         y_train_folds, y_test_fold = y_train[train_index], y_train[test_index]
         df_test_fold = df_train.iloc[test_index, :].copy()
-        w = sample_weights(y_test_fold, 2)
 
-#        model = GaussianNB()
         # fit model
         model.fit(X_train_folds, y_train_folds)
     
@@ -53,12 +50,14 @@ def kfold_crosseval(X_train, y_train, df_train, nsplits, groups=None,
                     print('Warning: Game ID %d has missing teams' % gid)
             y_test_fold = np.array(y_test_fold)
             y_pred = np.array(y_pred)
-            w = sample_weights(y_test_fold, 2)
         else:
             # predict model
             y_pred = model.predict(X_test_fold)
+            y_pred_prob = model.predict_proba(X_test_fold)
             
         accuracy[i] = accuracy_score(y_test_fold, y_pred)
-        w_accuracy[i] = accuracy_score(y_test_fold, y_pred, sample_weight=w)
-    return accuracy.mean(), w_accuracy.mean()
+        w_accuracy[i] = balanced_accuracy_score(y_test_fold, y_pred)
+        roc_auc[i] = roc_auc_score(y_test_fold, y_pred_prob)
+
+    return accuracy.mean(), w_accuracy.mean(), roc_auc.mean()
     
