@@ -10,6 +10,7 @@ import sys
 from matplotlib import pyplot as plt
 from sklearn.svm import SVC
 from sklearn.ensemble import AdaBoostClassifier
+sys.path.append('..')
 from auxiliary.data_processing import load_data, shape_data
 from auxiliary.kfold_crosseval import kfold_crosseval
 
@@ -66,13 +67,15 @@ for i, param1 in enumerate(params1):
                                                 model=model, level=level, 
                                                 shuffle=shuffle)
 
-np.savez('ouotput/%s' %method, accuracy=accuracy, w_accuracy=w_accuracy, 
+np.savez('output/%s' %method, accuracy=accuracy, w_accuracy=w_accuracy, 
          params2=params1, params1=params2)
 #%%
 plt.figure()
 plt.imshow(accuracy)
 plt.colorbar()
+plt.show()
 
 plt.figure()
 plt.imshow(w_accuracy)
 plt.colorbar()
+plt.show()

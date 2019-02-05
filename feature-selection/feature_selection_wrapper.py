@@ -5,6 +5,7 @@ Created on Sat Feb  2 19:25:38 2019
 @author: Georgios
 """
 import numpy as np
+import sys
 from itertools import combinations
 #from sklearn.linear_model import LogisticRegression
 #from sklearn.ensemble import RandomForestClassifier
@@ -13,6 +14,7 @@ from itertools import combinations
 from sklearn.ensemble import GradientBoostingClassifier, AdaBoostClassifier
 from sklearn.naive_bayes import GaussianNB
 from matplotlib import pyplot as plt
+sys.path.append('..')
 from auxiliary.data_processing import load_data, shape_data
 from auxiliary.kfold_crosseval import kfold_crosseval
 
@@ -66,7 +68,9 @@ plt.figure()
 plt.plot(x, scores[:, 0], label='Accuracy')
 plt.plot(x, scores[:, 1], label='W-Accuracy')
 plt.legend()
+plt.show()
 
 plt.figure()
 plt.bar(x[:15], scores[ll, 0][:15])
 plt.xticks(x[:15], sortcombs[:15], rotation='vertical')
+plt.show()

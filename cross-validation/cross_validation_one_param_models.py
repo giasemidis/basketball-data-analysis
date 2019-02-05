@@ -16,6 +16,7 @@ from sklearn.naive_bayes import GaussianNB
 from sklearn.ensemble import GradientBoostingClassifier, AdaBoostClassifier
 from sklearn.neighbors import KNeighborsClassifier
 from sklearn.discriminant_analysis import QuadraticDiscriminantAnalysis
+sys.path.append('..')
 from auxiliary.data_processing import load_data, shape_data
 from auxiliary.kfold_crosseval import kfold_crosseval
 
@@ -107,6 +108,7 @@ if params.shape[0] > 1:
     plt.ylabel('Score')
     plt.legend()
     plt.title(method)
+    plt.show()
 else:
     print('Accuracy: ', accuracy.mean(axis=0))
     print('Weighted Accuracy: ', w_accuracy.mean(axis=0))

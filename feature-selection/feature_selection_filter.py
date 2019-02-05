@@ -5,6 +5,7 @@ Created on Sat Feb  2 19:25:38 2019
 @author: Georgios
 """
 import numpy as np
+import sys
 #from sklearn.linear_model import LogisticRegression
 #from sklearn.ensemble import RandomForestClassifier
 #from sklearn.tree import DecisionTreeClassifier
@@ -13,6 +14,7 @@ from sklearn.ensemble import GradientBoostingClassifier, AdaBoostClassifier
 from sklearn.naive_bayes import GaussianNB
 from sklearn.feature_selection import SelectKBest, f_classif, mutual_info_classif 
 from matplotlib import pyplot as plt
+sys.path.append('..')
 from auxiliary.data_processing import load_data, shape_data
 from auxiliary.kfold_crosseval import kfold_crosseval
 
@@ -73,6 +75,7 @@ plt.grid(which='major', linestyle='-')
 plt.grid(which='minor', linestyle='--')
 plt.title('ANOVA')
 plt.legend()
+plt.show()
 
 plt.figure()
 plt.plot(x, accuracy[:, 1], label='Accuracy')
@@ -84,3 +87,4 @@ plt.grid(which='major', linestyle='-')
 plt.grid(which='minor', linestyle='--')
 plt.title('MI')
 plt.legend()
+plt.show()

@@ -5,6 +5,7 @@ Created on Sat Feb  2 19:25:38 2019
 @author: Georgios
 """
 import numpy as np
+import sys
 #from sklearn.linear_model import LogisticRegression
 #from sklearn.ensemble import RandomForestClassifier
 #from sklearn.tree import DecisionTreeClassifier
@@ -13,6 +14,7 @@ from sklearn.ensemble import GradientBoostingClassifier, AdaBoostClassifier
 from sklearn.naive_bayes import GaussianNB
 from sklearn.decomposition import PCA
 from matplotlib import pyplot as plt
+sys.path.append('..')
 from auxiliary.data_processing import load_data, shape_data
 from auxiliary.kfold_crosseval import kfold_crosseval
 
@@ -29,7 +31,8 @@ model= AdaBoostClassifier(n_estimators=60, random_state=10,
 df = load_data(level)
 
 #%% Re-shape data
-X_train, y_train, df, init_feat, n_feats, groups = shape_data(df, norm=norm, min_round=min_round)
+X_train, y_train, df, init_feat, n_feats, groups = shape_data(df, norm=norm, 
+                                                        min_round=min_round)
 
 #%% Apply PCA and then k-fold cross validation
 
@@ -53,3 +56,4 @@ plt.plot(x, scores[:, 1], label='W-Accuracy')
 plt.xticks(x, x)
 plt.grid()
 plt.legend()
+plt.show()
