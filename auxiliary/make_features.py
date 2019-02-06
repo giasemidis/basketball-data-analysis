@@ -32,7 +32,7 @@ def find_form(df, game_round, team_id):
     return form
 
 
-def make_features_from_df(data, standings):
+def make_features_from_df(data, standings, f4teams=[]):
     '''game-level features:
         standing of home team
         standing of away team
@@ -47,6 +47,8 @@ def make_features_from_df(data, standings):
     '''
     stands = standings.copy()
     stands['Round'] += 1
+    data['Home F4'] = np.where(data['Home Team'].isin(f4teams), 1, 0)
+    data['Away F4'] = np.where(data['Away Team'].isin(f4teams), 1, 0)
     new_df = data.merge(stands, how='left', 
                         left_on=['Round', 'Home Team'],
                         right_on=['Round', 'Club Name'])
@@ -106,7 +108,8 @@ def make_features_from_df(data, standings):
                      'Defence_x', 'Defence_y',
 #                     'Wins_to_Losses_x', 'Wins_to_Losses_y',
                      'form_x', 'form_y',
-                     'Diff_x', 'Diff_y']]
+                     'Diff_x', 'Diff_y',
+                     'Home F4', 'Away F4']]
     
     return new_df
 
@@ -207,8 +210,8 @@ def make_features(df, standings=None):
     return df
 
 
-def make_team_features(data, standings, year=None):
-    game_feats = make_features_from_df(data, standings)
+def make_team_features(data, standings, f4Teams=[], year=None):
+    game_feats = make_features_from_df(data, standings, f4Teams)
 
     if 'Label' not in game_feats.keys():
         label = np.where(data['Home Score'] > data['Away Score'], 1, 2)
@@ -219,24 +222,26 @@ def make_team_features(data, standings, year=None):
     game_feats['Game ID'] = game_id
 
     home = game_feats[['Round', 'Game ID', 'Home Team', 'Position_x', 
-                       'Offence_x', 'Defence_x', 'form_x']]
+                       'Offence_x', 'Defence_x', 'form_x', 'Home F4']]
     home = home.rename(index=str, columns={'Home Team': 'Team', 
                                            'Position_x': 'Position',
                                            'Offence_x': 'Offence',
                                            'Defence_x': 'Defence',
-                                           'form_x': 'form'})
+                                           'form_x': 'form',
+                                           'Home F4': 'F4'})
     home['Diff'] = home['Offence'] - home['Defence']
     home.insert(3, 'Label', np.where(game_feats['Label'].values==1, 1, 0))
     home.insert(4, 'Home', 1)
     home.insert(5, 'Away', 0)
 
     away = game_feats[['Round', 'Game ID', 'Away Team', 'Position_y', 
-                        'Offence_y', 'Defence_y', 'form_y']]
+                        'Offence_y', 'Defence_y', 'form_y', 'Away F4']]
     away = away.rename(index=str, columns={'Away Team': 'Team', 
                                            'Position_y': 'Position',
                                            'Offence_y': 'Offence',
                                            'Defence_y': 'Defence',
-                                           'form_y': 'form'})
+                                           'form_y': 'form',
+                                           'Away F4': 'F4'})
     away['Diff'] = away['Offence'] - away['Defence']
     away.insert(3, 'Label', np.where(game_feats['Label'].values==2, 1, 0))
     away.insert(4, 'Home', 0)
