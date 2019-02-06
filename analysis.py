@@ -19,6 +19,7 @@ import argparse
 import numpy as np
 import pandas as pd
 import sys
+from auxiliary.io_json import read_json
 
 
 def main(year):
@@ -26,18 +27,10 @@ def main(year):
     # read input data (results and standings)
     data = pd.read_csv('data/euroleague_results_%d_%d.csv' % (year, year+1))
     standings = pd.read_csv('data/euroleague_standings_%d_%d.csv' % (year, year+1))
-
+    f4teams = read_json('data/f4teams.json')
+    
     # Specify the F4 teams of the previous year
-    if year == 2017:
-        # f4 teams in 2016-2017 year
-        f4Teams = ['Fenerbahce Dogus Istanbul', 'Olympiacos Piraeus', 
-                   'CSKA Moscow', 'Real Madrid']
-    elif year == 2016:
-        # f4 teams in 2015-2016 year
-        f4Teams = ['Fenerbahce Istanbul', 'CSKA Moscow',
-                   'Lokomotiv Kuban', 'Baskonia Vitoria Gasteiz']
-    else:
-        sys.exit('Year not valid')
+    f4Teams = f4teams[str(year)]
     
     # Checks
     flag = False
