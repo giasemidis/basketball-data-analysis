@@ -23,8 +23,8 @@ norm = True
 min_round = 5
 nsplits = 5
 #model = GaussianNB()
-model= AdaBoostClassifier(n_estimators=60, random_state=10,
-                          learning_rate=0.5)
+model= AdaBoostClassifier(n_estimators=115, random_state=10,
+                          learning_rate=1.1)
 
 #%% load data
 df = load_data(level)

@@ -24,8 +24,8 @@ norm = True
 min_round = 5
 nsplits = 5
 #mode = GaussianNB()
-model= AdaBoostClassifier(n_estimators=60, random_state=10,
-                          learning_rate=0.5)
+model= AdaBoostClassifier(n_estimators=115, random_state=10,
+                          learning_rate=1.1)
 
 #%% load data
 df = load_data(level)
@@ -54,7 +54,7 @@ for i, n in enumerate(range(1, n_feats+1)):
 
     accuracy[i, 0], w_accuracy[i, 0] = kfold_crosseval(X_fc, y_train, df, 
                                                        nsplits, groups=groups, 
-                                                       model=GaussianNB(),
+                                                       model=model,
                                                        level=level, 
                                                        shuffle=shuffle)
     accuracy[i, 1], w_accuracy[i, 1] = kfold_crosseval(X_mi, y_train, df, 
