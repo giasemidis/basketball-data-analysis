@@ -61,13 +61,13 @@ for i, param1 in enumerate(params1):
             model = AdaBoostClassifier(n_estimators=param1, random_state=10,
                                        learning_rate=param2)
 
-            # apply k-fold cross validation
-            accuracy[i, j], w_accuracy[i, j] = kfold_crosseval(X_train, y_train, 
-                                                df, nsplits, groups=groups, 
-                                                model=model, level=level, 
-                                                shuffle=shuffle)
+        # apply k-fold cross validation
+        accuracy[i, j], w_accuracy[i, j] = kfold_crosseval(X_train, y_train, 
+                                            df, nsplits, groups=groups, 
+                                            model=model, level=level, 
+                                            shuffle=shuffle)
 
-np.savez('output/%s' %method, accuracy=accuracy, w_accuracy=w_accuracy, 
+np.savez('../output/%s' %method, accuracy=accuracy, w_accuracy=w_accuracy,
          params1=params1, params2=params2)
 #%%
 s = np.load('../output/%s.npz' %method)
