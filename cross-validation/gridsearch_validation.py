@@ -22,7 +22,7 @@ sys.path.append('..')
 from auxiliary.data_processing import load_data, shape_data
 
 # settings
-level = 'team'
+level = 'match'
 norm = True
 shuffle = True
 method = 'ada'
@@ -66,7 +66,7 @@ elif method == 'svm-rbf':
     model = SVC(class_weight='balanced', random_state=10)
 elif method == 'decision-tree':
     params = {}
-    model = DecisionTreeClassifier(random_state=10, class_weight='balanced')
+    model = DecisionTreeClassifier(class_weight='balanced', random_state=10)
 elif method == 'random-forest':
     params = {'n_estimators': np.arange(10, 100, 5)}
     model = RandomForestClassifier(class_weight='balanced', random_state=10)
@@ -77,14 +77,14 @@ elif method == 'gradient-boosting':
     params = {'n_estimators': np.arange(10, 200, 10)}
     model = GradientBoostingClassifier(random_state=10)
 elif method == 'ada':
-    params = {'n_estimators': np.arange(5, 200, 3)}
-    model = AdaBoostClassifier(random_state=10, learning_rate=0.6)
+    params = {'n_estimators': np.arange(5, 200, 1)}
+    model = AdaBoostClassifier(random_state=10, learning_rate=1.1)
 elif method == 'ada2':
-    params = {'n_estimators': np.arange(5, 200, 3),
+    params = {'n_estimators': np.arange(5, 200, 1),
               'learning_rate': np.arange(0.3, 1.5, 0.1)}
     model = AdaBoostClassifier(random_state=10)
 elif method == 'knn':
-    params = {'n_neighbors': np.arange(3, 30, 2)}
+    params = {'n_neighbors': np.arange(3, 50, 2)}
     model = KNeighborsClassifier()
 elif method == 'discriminant-analysis': 
     params = {}
