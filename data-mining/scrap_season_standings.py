@@ -53,7 +53,7 @@ def main(season):
     print('Convert to dataframe')
     df = pd.DataFrame(standings, columns=headers)
     print('Save ot file')
-    df.to_csv('../data/euroleague_standings_%s2.csv' % season, index=False)
+    df.to_csv('../data/euroleague_standings_%s.csv' % season, index=False)
     return
 
 if __name__ == "__main__":
