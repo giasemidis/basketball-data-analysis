@@ -20,11 +20,11 @@ def main(season, filename):
     site for the input season.
     Saves data to file.
     '''
-
+    season = season - 1
     headers = ['Round', 'Date', 'Home Team', 'Away Team',
                'Home Score', 'Away Score']
     results = []
-    regex = re.compile(r'score [a-z\s]*pts[a-z\s]')
+    regex = re.compile(r'score [a-z\s]*pts[a-z\s]*')
     bb = []
     for game_round in range(1, 31):
         print('Processing round %d' % game_round)
@@ -39,10 +39,15 @@ def main(season, filename):
         for game in soup.find_all('div', attrs={'class': 'game played'}):
             home_team = game.find_all('span', attrs={'class': 'name'})[0].string
             away_team = game.find_all('span', attrs={'class': 'name'})[1].string
-            home_score = int(game.find_all('span',
-                                           attrs={'class': regex})[0].string)
-            away_score = int(game.find_all('span',
-                                           attrs={'class': regex})[1].string)
+            scores = game.find_all('span', attrs={'class': regex})
+
+            home_score = int(scores[0]['data-score'] if
+                             scores[0].has_attr('data-score') else
+                             scores[0].string)
+            away_score = int(scores[1]['data-score'] if
+                             scores[1].has_attr('data-score') else
+                             scores[1].string)
+
             date_str = game.find('span', attrs={'class': 'date'}).string
             date = datetime.strptime(date_str, '%B %d %H:%M CET')
             if date.month <= 12 and date.month > 8:

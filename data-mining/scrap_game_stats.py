@@ -15,7 +15,8 @@ import pandas as pd
 
 
 def main(season, filename):
-    regex = re.compile(r'score [a-z\s]*pts[a-z\s]')
+    season = season - 1
+    regex = re.compile(r'score [a-z\s]*pts[a-z\s]*')
     allteamstats = []
     header = ['Season', 'Round', 'Date', 'Team', 'Where', 'Offence', 'Defence']
 
@@ -33,10 +34,15 @@ def main(season, filename):
         for game in soup.find_all('div', attrs={'class': 'game played'}):
             home_team = game.find_all('span', attrs={'class': 'name'})[0].string
             away_team = game.find_all('span', attrs={'class': 'name'})[1].string
-            home_score = int(game.find_all('span',
-                                           attrs={'class': regex})[0].string)
-            away_score = int(game.find_all('span',
-                                           attrs={'class': regex})[1].string)
+
+            scores = game.find_all('span', attrs={'class': regex})
+            home_score = int(scores[0]['data-score'] if
+                             scores[0].has_attr('data-score') else
+                             scores[0].string)
+            away_score = int(scores[1]['data-score'] if
+                             scores[1].has_attr('data-score') else
+                             scores[1].string)
+
             date_str = game.find('span', attrs={'class': 'date'}).string
             date = datetime.strptime(date_str, '%B %d %H:%M CET')
             yr = season if date.month <= 12 and date.month > 8 else season + 1
