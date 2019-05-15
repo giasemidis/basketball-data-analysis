@@ -15,24 +15,27 @@ def find_form(df, game_round, team_id):
     games.
     '''
     form = np.nan
-    team_df = df[((df['Home Team ID'] == team_id) | 
+    team_df = df[((df['Home Team ID'] == team_id) |
                  (df['Away Team ID'] == team_id)) &
-                 ((df['Game Round'] < game_round) & (df['Game Round'] >= game_round - 5))]
+                 ((df['Game Round'] < game_round) &
+                  (df['Game Round'] >= game_round - 5))]
     n_games = team_df.shape[0]
-    
+
     if n_games == 0:
         return np.nan
 
     home_games = team_df['Home Team ID'] == team_id
     away_games = team_df['Away Team ID'] == team_id
-    wins = np.sum(team_df['Home Score'][home_games] > team_df['Away Score'][home_games])
-    wins += np.sum(team_df['Home Score'][away_games] < team_df['Away Score'][away_games])
+    wins = np.sum(team_df['Home Score'][home_games] >
+                  team_df['Away Score'][home_games])
+    wins += np.sum(team_df['Home Score'][away_games] <
+                   team_df['Away Score'][away_games])
 
     form = wins / n_games
     return form
 
 
-def make_features_from_df(data, standings, f4teams=[]):
+def make_game_features(data, standings, f4teams=[]):
     '''game-level features:
         standing of home team
         standing of away team
@@ -49,7 +52,7 @@ def make_features_from_df(data, standings, f4teams=[]):
     stands['Round'] += 1
     data['Home F4'] = np.where(data['Home Team'].isin(f4teams), 1, 0)
     data['Away F4'] = np.where(data['Away Team'].isin(f4teams), 1, 0)
-    new_df = data.merge(stands, how='left', 
+    new_df = data.merge(stands, how='left',
                         left_on=['Round', 'Home Team'],
                         right_on=['Round', 'Club Name'])
     new_df = new_df.merge(stands, how='left',
@@ -57,7 +60,8 @@ def make_features_from_df(data, standings, f4teams=[]):
                           right_on=['Round', 'Club Name'])
 
     tmp = new_df[['Offence_x', 'Offence_y', 'Defence_x', 'Defence_y']].values
-    tmp /= np.repeat((new_df['Round'].values - 1)[:, np.newaxis], tmp.shape[1], axis=1)
+    tmp /= np.repeat((new_df['Round'].values - 1)[:, np.newaxis], tmp.shape[1],
+                     axis=1)
 
     new_df[['Offence_x', 'Offence_y', 'Defence_x', 'Defence_y']] = tmp
     new_df['Diff_x'] = new_df['Offence_x'] - new_df['Defence_x']
@@ -67,7 +71,7 @@ def make_features_from_df(data, standings, f4teams=[]):
 #    new_df['Wins_to_Losses_x'] = tmp[:, 0] / tmp[:, 1]
 #    tmp = new_df[['Wins_y', 'Losses_y']].values
 #    new_df['Wins_to_Losses_y'] = tmp[:, 0] / tmp[:, 1]
-    
+
     forms_home = np.zeros(new_df.shape[0])
     forms_away = np.zeros(new_df.shape[0])
     n_form_games = 5
@@ -79,23 +83,35 @@ def make_features_from_df(data, standings, f4teams=[]):
         form_away = 0.
         den = 1
         if g_round > n_form_games + 1:
-            form_home = standings[(standings['Club Name'] == home_team) &
-                                  (standings['Round'] == g_round-1)]['Wins'].values[0] -\
-                        standings[(standings['Club Name'] == home_team) &
-                                  (standings['Round'] == g_round-n_form_games-1)]['Wins'].values[0]
-    
-            form_away = standings[(standings['Club Name'] == away_team) &
-                                  (standings['Round'] == g_round-1)]['Wins'].values[0] -\
-                        standings[(standings['Club Name'] == away_team) &
-                                  (standings['Round'] == g_round-n_form_games-1)]['Wins'].values[0]
+            # index of home team at previous round
+            ii1 = ((standings['Club Name'] == home_team) &
+                   (standings['Round'] == g_round-1))
+            # index of home team at `n_form_games` rounds ago.
+            ii2 = ((standings['Club Name'] == home_team) &
+                   (standings['Round'] == g_round-n_form_games-1))
+            form_home = (standings[ii1]['Wins'].values[0] -
+                         standings[ii2]['Wins'].values[0])
+
+            # index of away team at previous round
+            ii1 = ((standings['Club Name'] == away_team) &
+                   (standings['Round'] == g_round-1))
+            # index of away team at `n_form_games` rounds ago.
+            ii2 = ((standings['Club Name'] == away_team) &
+                   (standings['Round'] == g_round-n_form_games-1))
+            form_away = (standings[ii1]['Wins'].values[0] -
+                         standings[ii2]['Wins'].values[0])
             den = n_form_games
         elif g_round > 1:
-            form_home = standings[(standings['Club Name'] == home_team) &
-                                   (standings['Round'] == g_round-1)]['Wins'].values[0]
-            form_away = standings[(standings['Club Name'] == away_team) &
-                                   (standings['Round'] == g_round-1)]['Wins'].values[0]
+            # index of home team at previous round
+            ii1 = ((standings['Club Name'] == home_team) &
+                   (standings['Round'] == g_round-1))
+            form_home = standings[ii1]['Wins'].values[0]
+            # index of away team at previous round
+            ii1 = ((standings['Club Name'] == away_team) &
+                   (standings['Round'] == g_round-1))
+            form_away = standings[ii1]['Wins'].values[0]
             den = g_round-1
-#        print(g_round, form_home, form_away)
+        # print(g_round, form_home, form_away)
         forms_home[index] = form_home / den
         forms_away[index] = form_away / den
 
@@ -103,17 +119,18 @@ def make_features_from_df(data, standings, f4teams=[]):
     new_df['form_y'] = forms_away
 
     new_df = new_df[['Round', 'Home Team', 'Away Team',
-                     'Position_x', 'Position_y', 
+                     'Position_x', 'Position_y',
                      'Offence_x', 'Offence_y',
                      'Defence_x', 'Defence_y',
-#                     'Wins_to_Losses_x', 'Wins_to_Losses_y',
+                     # 'Wins_to_Losses_x', 'Wins_to_Losses_y',
                      'form_x', 'form_y',
                      'Diff_x', 'Diff_y',
                      'Home F4', 'Away F4']]
-    
+
     return new_df
 
-def make_features(df, standings=None):
+
+def make_game_features_v0(df, standings=None):
     '''game-level features:
         standing of home team
         standing of away team
@@ -148,17 +165,23 @@ def make_features(df, standings=None):
 
         standing = standings[game_round-1]
 
-        standing_home_team = standing[standing['Team ID'] == home_team].index[0] + 1
-        standing_away_team = standing[standing['Team ID'] == away_team].index[0] + 1
+        standing_home_team = standing[standing['Team ID'] ==
+                                      home_team].index[0] + 1
+        standing_away_team = standing[standing['Team ID'] ==
+                                      away_team].index[0] + 1
 
         form_home_team = find_form(df, game_round, home_team)
         form_away_team = find_form(df, game_round, away_team)
 
-        avg_attack_home_team = standing[standing['Team ID'] == home_team]['Score+'] / game_round
-        avg_attack_away_team = standing[standing['Team ID'] == away_team]['Score+'] / game_round
+        avg_attack_home_team = standing[standing['Team ID'] ==
+                                        home_team]['Score+'] / game_round
+        avg_attack_away_team = standing[standing['Team ID'] ==
+                                        away_team]['Score+'] / game_round
 
-        avg_defence_home_team = standing[standing['Team ID'] == home_team]['Score-'] / game_round
-        avg_defence_away_team = standing[standing['Team ID'] == away_team]['Score-'] / game_round
+        avg_defence_home_team = standing[standing['Team ID'] ==
+                                         home_team]['Score-'] / game_round
+        avg_defence_away_team = standing[standing['Team ID'] ==
+                                         away_team]['Score-'] / game_round
         home_team_inf4 = 1 if home_team in f4 else 0
         home_team_intop8 = 1 if home_team in top8 else 0
         home_team_inrest = 0 if (home_team_inf4 or home_team_intop8) else 1
@@ -193,12 +216,17 @@ def make_features(df, standings=None):
         headers.extend([str(t)+'-away' for t in teams])
 
     df = pd.DataFrame(data=features, columns=headers)
-#    df = df.astype(dtype={'standing-home-team': int, 'standing-away-team': int,
-#               'form-home-team': float, 'form-away-team': float,
-#               'avg-attack-home-team': float, 'avg-attack-away-team': float,
-#               'avg-defence-home-team': float, 'avg-defence-away-team': float,
-#               'home-team-f4': int, 'home-team-top8': int, 'home-team-rest': int,
-#               'away-team-f4': int, 'away-team-top8': int, 'away-team-rest': int})
+    # df = df.astype(dtype={'standing-home-team': int,
+    #                       'standing-away-team': int,
+    #                       'form-home-team': float, 'form-away-team': float,
+    #                       'avg-attack-home-team': float,
+    #                       'avg-attack-away-team': float,
+    #                       'avg-defence-home-team': float,
+    #                       'avg-defence-away-team': float,
+    #                       'home-team-f4': int, 'home-team-top8': int,
+    #                       'home-team-rest': int,
+    #                       'away-team-f4': int, 'away-team-top8': int,
+    #                       'away-team-rest': int})
     headers_dict = dict(zip(headers, [int]*features.shape[1]))
     headers_dict['form-home-team'] = float
     headers_dict['form-away-team'] = float
@@ -211,43 +239,43 @@ def make_features(df, standings=None):
 
 
 def make_team_features(data, standings, f4Teams=[], year=None):
-    game_feats = make_features_from_df(data, standings, f4Teams)
+    game_feats = make_game_features(data, standings, f4Teams)
 
     if 'Label' not in game_feats.keys():
         label = np.where(data['Home Score'] > data['Away Score'], 1, 2)
         game_feats.insert(3, 'Label', label)
 
     game_id = [np.abs(hash(x['Home Team']+x['Away Team']+str(year))) for
-                           indx, x in game_feats.iterrows()]
+               indx, x in game_feats.iterrows()]
     game_feats['Game ID'] = game_id
 
-    home = game_feats[['Round', 'Game ID', 'Home Team', 'Position_x', 
+    home = game_feats[['Round', 'Game ID', 'Home Team', 'Position_x',
                        'Offence_x', 'Defence_x', 'form_x', 'Home F4']]
-    home = home.rename(index=str, columns={'Home Team': 'Team', 
+    home = home.rename(index=str, columns={'Home Team': 'Team',
                                            'Position_x': 'Position',
                                            'Offence_x': 'Offence',
                                            'Defence_x': 'Defence',
                                            'form_x': 'form',
                                            'Home F4': 'F4'})
     home['Diff'] = home['Offence'] - home['Defence']
-    home.insert(3, 'Label', np.where(game_feats['Label'].values==1, 1, 0))
+    home.insert(3, 'Label', np.where(game_feats['Label'].values == 1, 1, 0))
     home.insert(4, 'Home', 1)
     home.insert(5, 'Away', 0)
 
-    away = game_feats[['Round', 'Game ID', 'Away Team', 'Position_y', 
-                        'Offence_y', 'Defence_y', 'form_y', 'Away F4']]
-    away = away.rename(index=str, columns={'Away Team': 'Team', 
+    away = game_feats[['Round', 'Game ID', 'Away Team', 'Position_y',
+                       'Offence_y', 'Defence_y', 'form_y', 'Away F4']]
+    away = away.rename(index=str, columns={'Away Team': 'Team',
                                            'Position_y': 'Position',
                                            'Offence_y': 'Offence',
                                            'Defence_y': 'Defence',
                                            'form_y': 'form',
                                            'Away F4': 'F4'})
     away['Diff'] = away['Offence'] - away['Defence']
-    away.insert(3, 'Label', np.where(game_feats['Label'].values==2, 1, 0))
+    away.insert(3, 'Label', np.where(game_feats['Label'].values == 2, 1, 0))
     away.insert(4, 'Home', 0)
     away.insert(5, 'Away', 1)
-    
+
     team_feats = pd.concat([home, away])
     team_feats.sort_values(by=['Round', 'Team'], inplace=True)
-    
+
     return team_feats
