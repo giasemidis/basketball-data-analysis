@@ -6,8 +6,8 @@ Created on Sat Oct  6 16:57:48 2018
 """
 
 import json
-from . deco_path_valid import valid_file
-from . deco_path_valid import valid_folder
+from deco_path_valid import valid_file
+from deco_path_valid import valid_folder
 
 
 @valid_folder

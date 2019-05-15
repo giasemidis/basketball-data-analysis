@@ -6,7 +6,7 @@ Created on Sun Sep 23 17:13:33 2018
 """
 import numpy as np
 import pandas as pd
-from auxiliary.make_standings import make_standings
+from make_standings import make_standings
 
 
 def find_form(df, game_round, team_id):

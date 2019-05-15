@@ -7,9 +7,9 @@ Created on Sun Apr  8 02:17:41 2018
 import numpy as np
 import pandas as pd
 import argparse
-from auxiliary.make_features import make_game_features
-from auxiliary.make_features import make_team_features
-from auxiliary.io_json import read_json
+from make_features import make_game_features
+from make_features import make_team_features
+from io_json import read_json
 
 
 def main(year, results_file, standings_file, f4_file, output=''):
