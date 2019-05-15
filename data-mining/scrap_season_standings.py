@@ -46,7 +46,7 @@ def main(season, filename):
             # sc = a[a.find(var2) + len(var2):]
             pos_team = row.find('a').string.strip()
             pos = int(re.findall(r'\d{1,2}', pos_team)[0])
-            team = re.findall(r'[a-zA-Z\s]+', pos_team)[0].strip()
+            team = re.findall(r'[a-zA-Z\s-]+', pos_team)[0].strip()
             stats = row.find_all('td')
             wins = int(stats[1].string.strip())
             losses = int(stats[2].string.strip())
