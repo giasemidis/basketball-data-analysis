@@ -85,32 +85,32 @@ def make_game_features(data, standings, f4teams=[]):
         if g_round > n_form_games + 1:
             # index of home team at previous round
             ii1 = ((standings['Club Name'] == home_team) &
-                   (standings['Round'] == g_round-1))
+                   (standings['Round'] == g_round - 1))
             # index of home team at `n_form_games` rounds ago.
             ii2 = ((standings['Club Name'] == home_team) &
-                   (standings['Round'] == g_round-n_form_games-1))
+                   (standings['Round'] == g_round - n_form_games - 1))
             form_home = (standings[ii1]['Wins'].values[0] -
                          standings[ii2]['Wins'].values[0])
 
             # index of away team at previous round
             ii1 = ((standings['Club Name'] == away_team) &
-                   (standings['Round'] == g_round-1))
+                   (standings['Round'] == g_round - 1))
             # index of away team at `n_form_games` rounds ago.
             ii2 = ((standings['Club Name'] == away_team) &
-                   (standings['Round'] == g_round-n_form_games-1))
+                   (standings['Round'] == g_round - n_form_games - 1))
             form_away = (standings[ii1]['Wins'].values[0] -
                          standings[ii2]['Wins'].values[0])
             den = n_form_games
         elif g_round > 1:
             # index of home team at previous round
             ii1 = ((standings['Club Name'] == home_team) &
-                   (standings['Round'] == g_round-1))
+                   (standings['Round'] == g_round - 1))
             form_home = standings[ii1]['Wins'].values[0]
             # index of away team at previous round
             ii1 = ((standings['Club Name'] == away_team) &
-                   (standings['Round'] == g_round-1))
+                   (standings['Round'] == g_round - 1))
             form_away = standings[ii1]['Wins'].values[0]
-            den = g_round-1
+            den = g_round - 1
         # print(g_round, form_home, form_away)
         forms_home[index] = form_home / den
         forms_away[index] = form_away / den
@@ -163,7 +163,7 @@ def make_game_features_v0(df, standings=None):
             features[row, :] = -1 * np.ones(n_features)
             continue
 
-        standing = standings[game_round-1]
+        standing = standings[game_round - 1]
 
         standing_home_team = standing[standing['Team ID'] ==
                                       home_team].index[0] + 1
@@ -212,8 +212,8 @@ def make_game_features_v0(df, standings=None):
                    'avg-defence-home-team', 'avg-defence-away-team',
                    'home-team-f4', 'home-team-top8', 'home-team-rest',
                    'away-team-f4', 'away-team-top8', 'away-team-rest']
-        headers.extend([str(t)+'-home' for t in teams])
-        headers.extend([str(t)+'-away' for t in teams])
+        headers.extend([str(t) + '-home' for t in teams])
+        headers.extend([str(t) + '-away' for t in teams])
 
     df = pd.DataFrame(data=features, columns=headers)
     # df = df.astype(dtype={'standing-home-team': int,
@@ -227,7 +227,7 @@ def make_game_features_v0(df, standings=None):
     #                       'home-team-rest': int,
     #                       'away-team-f4': int, 'away-team-top8': int,
     #                       'away-team-rest': int})
-    headers_dict = dict(zip(headers, [int]*features.shape[1]))
+    headers_dict = dict(zip(headers, [int] * features.shape[1]))
     headers_dict['form-home-team'] = float
     headers_dict['form-away-team'] = float
     headers_dict['avg-attack-home-team'] = float
@@ -245,7 +245,7 @@ def make_team_features(data, standings, f4Teams=[], year=None):
         label = np.where(data['Home Score'] > data['Away Score'], 1, 2)
         game_feats.insert(3, 'Label', label)
 
-    game_id = [np.abs(hash(x['Home Team']+x['Away Team']+str(year))) for
+    game_id = [np.abs(hash(x['Home Team'] + x['Away Team'] + str(year))) for
                indx, x in game_feats.iterrows()]
     game_feats['Game ID'] = game_id
 
