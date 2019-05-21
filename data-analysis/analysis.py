@@ -18,15 +18,16 @@ import argparse
 import numpy as np
 import pandas as pd
 import sys
-from auxiliary.io_json import read_json
+sys.path.append('auxiliary')
+from io_json import read_json
 
 
 def main(year):
 
     # read input data (results and standings)
-    data = pd.read_csv('data/euroleague_results_%d_%d.csv' % (year, year+1))
+    data = pd.read_csv('data/euroleague_results_%d_%d.csv' % (year, year + 1))
     standings = pd.read_csv('data/euroleague_standings_%d_%d.csv'
-                            % (year, year+1))
+                            % (year, year + 1))
     f4teams = read_json('data/f4teams.json')
 
     # Specify the F4 teams of the previous year
@@ -54,8 +55,7 @@ def main(year):
 
     # team_dict = dict.fromkeys(teams, np.ones(ngames, dtype=int))
 
-    data['Actual'] = np.where(data['Home Score'].values >
-                              data['Away Score'].values, 1, 2)
+    data['Actual'] = np.where(data['Home Score'] > data['Away Score'], 1, 2)
     data['Home Wins'] = np.ones(nmatches, dtype=int)
 
     # f4 model: the F4 teams of the previous year always win.
@@ -76,7 +76,7 @@ def main(year):
             continue
 
         # standings model
-        s = standings[standings['Round'] == r-1]
+        s = standings[standings['Round'] == r - 1]
         d = data[data['Round'] == r]
 
         home_stands = np.array([s[s['Club Name'] == u]['Position'].iloc[0]
@@ -92,14 +92,14 @@ def main(year):
             away_won = np.array([1 if s[s['Club Name'] == u]['Wins'].iloc[0] > 0
                                 else 0 for u in d['Away Team'].values])
         else:
-            s_prev = standings[standings['Round'] == r-2]
+            s_prev = standings[standings['Round'] == r - 2]
             home_won = np.array([1 if s[s['Club Name'] == u]['Wins'].iloc[0] >
-                                 s_prev[s_prev['Club Name'] == u]
-                                 ['Wins'].iloc[0]
+                                 s_prev[s_prev['Club Name'] == u]['Wins']
+                                 .iloc[0]
                                  else 0 for u in d['Home Team'].values])
             away_won = np.array([1 if s[s['Club Name'] == u]['Wins'].iloc[0] >
-                                 s_prev[s_prev['Club Name'] == u]
-                                 ['Wins'].iloc[0]
+                                 s_prev[s_prev['Club Name'] == u]['Wins']
+                                 .iloc[0]
                                  else 0 for u in d['Away Team'].values])
         persistence[data['Round'] == r] = np.where(away_won > home_won, 2, 1)
 
@@ -128,7 +128,7 @@ def main(year):
 if __name__ == "__main__":
     parser = argparse.ArgumentParser()
     parser.add_argument('-s', '--season', type=int,
-                        help="the season year")
+                        help="the begingin year of a season")
     args = parser.parse_args()
 
     if args.season is None:
