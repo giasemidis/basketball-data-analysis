@@ -7,8 +7,10 @@ Created on Sun Apr  8 02:17:41 2018
 import numpy as np
 import pandas as pd
 import argparse
+import sys
 from make_features import make_game_features
 from make_features import make_team_features
+sys.path.append('auxiliary')
 from io_json import read_json
 
 
