@@ -61,8 +61,8 @@ def main(year):
     # f4 model: the F4 teams of the previous year always win.
     # If no or both F4 teams in a game, home always wins.
     f4wins = np.ones(nmatches, dtype=int)
-    hmf4 = np.in1d(data['Home Team'].values, f4Teams)
-    awf4 = np.in1d(data['Away Team'].values, f4Teams)
+    hmf4 = np.in1d(data['Home Team'], f4Teams)
+    awf4 = np.in1d(data['Away Team'], f4Teams)
     f4wins[awf4 & (~hmf4)] = 2
     data['F4 Wins'] = f4wins
 
@@ -80,27 +80,27 @@ def main(year):
         d = data[data['Round'] == r]
 
         home_stands = np.array([s[s['Club Name'] == u]['Position'].iloc[0]
-                                for u in d['Home Team'].values])
+                                for u in d['Home Team']])
         away_stands = np.array([s[s['Club Name'] == u]['Position'].iloc[0]
-                                for u in d['Away Team'].values])
+                                for u in d['Away Team']])
         stand[data['Round'] == r] = np.where(home_stands < away_stands, 1, 2)
 
         # persistence model
         if r == 2:
             home_won = np.array([1 if s[s['Club Name'] == u]['Wins'].iloc[0] > 0
-                                else 0 for u in d['Home Team'].values])
+                                else 0 for u in d['Home Team']])
             away_won = np.array([1 if s[s['Club Name'] == u]['Wins'].iloc[0] > 0
-                                else 0 for u in d['Away Team'].values])
+                                else 0 for u in d['Away Team']])
         else:
             s_prev = standings[standings['Round'] == r - 2]
             home_won = np.array([1 if s[s['Club Name'] == u]['Wins'].iloc[0] >
                                  s_prev[s_prev['Club Name'] == u]['Wins']
                                  .iloc[0]
-                                 else 0 for u in d['Home Team'].values])
+                                 else 0 for u in d['Home Team']])
             away_won = np.array([1 if s[s['Club Name'] == u]['Wins'].iloc[0] >
                                  s_prev[s_prev['Club Name'] == u]['Wins']
                                  .iloc[0]
-                                 else 0 for u in d['Away Team'].values])
+                                 else 0 for u in d['Away Team']])
         persistence[data['Round'] == r] = np.where(away_won > home_won, 2, 1)
 
     data['Standings'] = stand
@@ -116,10 +116,11 @@ def main(year):
         rand = np.random.randint(1, 3, nmatches)
         random[i] = np.sum(data['Actual'].values == rand)
 
-    print('Home wins  :', np.sum(data['Actual'].values == data['Home Wins']))
-    print('Top4 wins  :', np.sum(data['Actual'].values == data['F4 Wins']))
-    print('Persistance:', np.sum(data['Actual'].values == data['Persistence']))
-    print('Standing   :', np.sum(data['Actual'].values == data['Standings']))
+    # data = data[data['Round'] != 26]
+    print('Home wins  :', np.sum(data['Actual'] == data['Home Wins']))
+    print('Top4 wins  :', np.sum(data['Actual'] == data['F4 Wins']))
+    print('Persistance:', np.sum(data['Actual'] == data['Persistence']))
+    print('Standing   :', np.sum(data['Actual'] == data['Standings']))
     print('Pana       :', np.sum(data['Actual'] == data['Pana']))
     print('Random     :', np.round(np.mean(random), 0))
     return
