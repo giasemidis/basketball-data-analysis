@@ -14,12 +14,13 @@ def shape_data(df, norm=True, min_round=5):
 
     n = list(df.columns).index('Label')
     # features start after the 'Label' column
-    init_feat = list(df.keys()[n+1:])
+    init_feat = list(df.keys()[n + 1:])
     n_feats = len(init_feat)
-    # ignore early games in the season, as they do not contain the 'form' feature.
+    # ignore early games in the season, as they do not contain the 'form'
+    # feature.
     ii = df['Round'].values > min_round
     # make the Design table
-    X_train = df.iloc[ii, (n+1):].values
+    X_train = df.iloc[ii, (n + 1):].values
     # normalise the Design table if required
     if norm:
         X_train = normalise(X_train)
@@ -31,7 +32,7 @@ def shape_data(df, norm=True, min_round=5):
     # filter out the games ignored
     df = df[ii]
     df.reset_index(drop=True, inplace=True)
-    
+
     # define the groups matches if processing 'team' level classification
     groups = df['Game ID'].values if 'Game ID' in df.keys() else None
 
@@ -41,13 +42,15 @@ def shape_data(df, norm=True, min_round=5):
 def load_data(level):
     '''load features'''
     if level == 'match':
-        df1 = pd.read_csv('../data/match_level_features_2016_2017.csv')
-        df2 = pd.read_csv('../data/match_level_features_2017_2018.csv')
+        df1 = pd.read_csv('data/match_level_features_2016_2017.csv')
+        df2 = pd.read_csv('data/match_level_features_2017_2018.csv')
+        df3 = pd.read_csv('data/match_level_features_2018_2019.csv')
     elif level == 'team':
-        df1 = pd.read_csv('../data/team_level_features_2016_2017.csv')
-        df2 = pd.read_csv('../data/team_level_features_2017_2018.csv')
+        df1 = pd.read_csv('data/team_level_features_2016_2017.csv')
+        df2 = pd.read_csv('data/team_level_features_2017_2018.csv')
+        df3 = pd.read_csv('data/team_level_features_2018_2019.csv')
     else:
         sys.exit('Invalid level of analysis')
-    
-    df = pd.concat([df1, df2], ignore_index=False)
+
+    df = pd.concat([df1, df2, df3], ignore_index=False)
     return df

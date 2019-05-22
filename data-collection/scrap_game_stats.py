@@ -49,11 +49,11 @@ def main(season, filename):
             date = date.replace(year=yr)
             date_str = datetime.strftime(date, '%Y-%m-%d %H:%M:%S')
 
-            home = {'Season': str(season) + '-' + str(season+1),
+            home = {'Season': str(season) + '-' + str(season + 1),
                     'Round': game_round,
                     'Date': date_str, 'Team': home_team, 'Where': 'Home',
                     'Offence': home_score, 'Defence': away_score}
-            away = {'Season': str(season) + '-' + str(season+1),
+            away = {'Season': str(season) + '-' + str(season + 1),
                     'Round': game_round,
                     'Date': date_str, 'Team': away_team, 'Where': 'Away',
                     'Offence': away_score, 'Defence': home_score}
@@ -84,7 +84,7 @@ def main(season, filename):
                     fullfield = stat.attrs['id']
                     if 'TotalTimePlayed' not in fullfield:
                         ii = fullfield.find('_lbl')
-                        field = fullfield[ii+9:]
+                        field = fullfield[ii + 9:]
                         string = stat.contents[0]
                         if string.isnumeric():
                             f = int(string)
@@ -93,12 +93,12 @@ def main(season, filename):
                                 header.append(field)
                         elif '/' in string:
                             made, attmp = string.split('/')
-                            dics[field+'-Made'] = int(made)
-                            dics[field+'-Attempted'] = int(attmp)
-                            if field+'-Made' not in header:
-                                header.append(field+'-Made')
-                            if field+'-Attempted' not in header:
-                                header.append(field+'-Attempted')
+                            dics[field + '-Made'] = int(made)
+                            dics[field + '-Attempted'] = int(attmp)
+                            if field + '-Made' not in header:
+                                header.append(field + '-Made')
+                            if field + '-Attempted' not in header:
+                                header.append(field + '-Attempted')
                         else:
                             print('Invalid field value')
                 allteamstats.append(dics)

@@ -10,11 +10,11 @@ import numpy as np
 
 def sample_weights(y, n_classes):
     ns = np.bincount(y, minlength=n_classes)
-    nonzeroinde = ns!=0
+    nonzeroinde = ns != 0
     w = np.zeros(n_classes)
     w[nonzeroinde] = y.shape[0] / (np.unique(y).shape[0] * ns[nonzeroinde])
     weights = np.zeros(y.shape[0])
     for i in range(n_classes):
-        weights[y==i] = w[i]
+        weights[y == i] = w[i]
 
     return weights

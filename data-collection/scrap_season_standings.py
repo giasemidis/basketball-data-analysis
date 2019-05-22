@@ -26,7 +26,7 @@ def main(season, filename):
         print('Processing round %d' % game_round)
         url = ('http://www.euroleague.net/main/standings?gamenumber=%d&'
                'phasetypecode=RS++++++++&seasoncode=E%d'
-               % (game_round, season-1))
+               % (game_round, season - 1))
         try:
             r = requests.get(url)
         except ConnectionError:

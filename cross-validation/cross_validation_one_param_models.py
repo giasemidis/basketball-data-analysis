@@ -28,25 +28,25 @@ method = 'log-reg'
 min_round = 5
 nsplits = 5
 
-print('level: %s - norm: %r - shuffle: %r - method: %s' % 
+print('level: %s - norm: %r - shuffle: %r - method: %s' %
       (level, norm, shuffle, method))
 
-#%% load data
+# %% load data
 df = load_data(level)
 
-#%% Re-shape data
-X_train, y_train, df, init_feat, n_feats, groups = shape_data(df, norm=norm, 
-                                                        min_round=min_round)
+# %% Re-shape data
+X_train, y_train, df, init_feat, n_feats, groups = shape_data(
+    df, norm=norm, min_round=min_round)
 print('Number of feaures:', X_train.shape[1], init_feat)
 print('Number of obs:', X_train.shape[0])
 
-#%% Set parameters    
+# %% Set parameters
 if method == 'log-reg':
     params = np.sort(np.concatenate((np.logspace(-5, 8, 14),
-                                     5*np.logspace(-5, 8, 14)), axis=0))
+                                     5 * np.logspace(-5, 8, 14)), axis=0))
 elif method == 'svm-linear':
     params = np.sort(np.concatenate((np.logspace(-5, 8, 14),
-                                     5*np.logspace(-5, 8, 14)), axis=0))
+                                     5 * np.logspace(-5, 8, 14)), axis=0))
 elif method == 'decision-tree':
     params = np.array([0])
 elif method == 'random-forest':
@@ -59,26 +59,29 @@ elif method == 'ada':
     params = np.arange(5, 200, 3)
 elif method == 'knn':
     params = np.arange(3, 30, 2)
-elif method == 'discriminant-analysis': 
+elif method == 'discriminant-analysis':
     params = np.array([0])
 else:
     sys.exit('Method not recognised')
 
-#%% Tune parameters
+# %% Tune parameters
 accuracy = np.zeros(params.shape[0])
 w_accuracy = np.zeros(params.shape[0])
 
 for j, param in enumerate(params):
-     
+
     # update model's parameters
     if method == 'log-reg':
-        model = LogisticRegression(C=param, solver='liblinear', class_weight='balanced')
+        model = LogisticRegression(C=param, solver='liblinear',
+                                   class_weight='balanced')
     elif method == 'svm-linear':
         model = SVC(C=param, kernel='linear', class_weight='balanced')
     elif method == 'decision-tree':
         model = DecisionTreeClassifier(class_weight='balanced', random_state=10)
     elif method == 'random-forest':
-        model = RandomForestClassifier(n_estimators=param, class_weight='balanced', random_state=10)
+        model = RandomForestClassifier(n_estimators=param,
+                                       class_weight='balanced',
+                                       random_state=10)
     elif method == 'naive-bayes':
         model = GaussianNB()
     elif method == 'gradient-boosting':
@@ -88,16 +91,16 @@ for j, param in enumerate(params):
                                    learning_rate=0.6)
     elif method == 'knn':
         model = KNeighborsClassifier(n_neighbors=param)
-    elif method == 'distriminant-analysis': 
+    elif method == 'distriminant-analysis':
         model = QuadraticDiscriminantAnalysis()
 
     # apply k-fold cross validation
-    accuracy[j], w_accuracy[j] = kfold_crosseval(X_train, y_train, 
-                                                 df, nsplits, groups=groups, 
-                                                 model=model, level=level, 
+    accuracy[j], w_accuracy[j] = kfold_crosseval(X_train, y_train,
+                                                 df, nsplits, groups=groups,
+                                                 model=model, level=level,
                                                  shuffle=shuffle)
 
-#%% Plots
+# %% Plots
 if params.shape[0] > 1:
     plt.figure()
     plt.plot(params, accuracy, label='accuracy')

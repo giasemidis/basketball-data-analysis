@@ -10,10 +10,10 @@ import requests
 def the_odds_api(api_key, sport='NBA', region='uk'):
     '''Returns odds of current games from https://the-odds-api.com/'''
 
-    #api_key = 'f52acecbfb57955edc30cec0cd1ee035'
+    # api_key = 'f52acecbfb57955edc30cec0cd1ee035'
 
     url = 'https://api.the-odds-api.com/v2/odds/'
-    parameters = {"sport": sport, "region": region,"apiKey": api_key}
+    parameters = {"sport": sport, "region": region, "apiKey": api_key}
     r = requests.get(url, params=parameters)
     if r.status_code != 200:
         print('Error, status code:', r.status_code)

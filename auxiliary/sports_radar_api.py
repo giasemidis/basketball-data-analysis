@@ -11,8 +11,9 @@ import requests
 def sports_radar_api(api_key, method):
     '''see https://developer.sportradar.com/io-docs'''
 
-    #api_key = 'q6jmutjvbxwk7eg69ypu73fx'
-    #example = 'http://api.sportradar.us/basketball-t1/en/schedules/2018-03-30/results.json?api_key=q6jmutjvbxwk7eg69ypu73fx'
+    # api_key = 'q6jmutjvbxwk7eg69ypu73fx'
+    # example = ('http://api.sportradar.us/basketball-t1/en/schedules/'+
+    #            '2018-03-30/results.json?api_key=q6jmutjvbxwk7eg69ypu73fx')
 
     url = 'http://api.sportradar.us/basketball-t1/en/'
     url = url + method

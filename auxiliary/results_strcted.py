@@ -8,7 +8,7 @@ Created on Sun Apr  1 23:17:33 2018
 
 def results_strcted(dictionary):
     header = ['Match ID', 'Home Team', 'Away Team', 'Game Round', 'Date',
-              'Home Score', 'Away Score', 'Status', 
+              'Home Score', 'Away Score', 'Status',
               'Home Team ID', 'Away Team ID',
               'Home Score Regular Period', 'Away Score Regular Period']
     data = []
