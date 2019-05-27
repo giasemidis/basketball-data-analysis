@@ -7,7 +7,7 @@ Created on Sun Feb  3 16:34:10 2019
 import numpy as np
 import sys
 import pandas as pd
-from auxiliary.normalise import normalise
+from normalise import normalise
 
 
 def shape_data(df, norm=True, min_round=5):
@@ -53,4 +53,10 @@ def load_data(level):
         sys.exit('Invalid level of analysis')
 
     df = pd.concat([df1, df2, df3], ignore_index=False)
+    seasoncol = np.concatenate(((2017 * np.ones(df1.shape[0], dtype=int)),
+                                (2018 * np.ones(df2.shape[0], dtype=int)),
+                                (2019 * np.ones(df3.shape[0], dtype=int))),
+                               axis=0)
+    if 'Season' not in df.keys():
+        df.insert(1, 'Season', seasoncol)
     return df
