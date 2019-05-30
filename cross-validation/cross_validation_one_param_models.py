@@ -16,12 +16,15 @@ from sklearn.naive_bayes import GaussianNB
 from sklearn.ensemble import GradientBoostingClassifier, AdaBoostClassifier
 from sklearn.neighbors import KNeighborsClassifier
 from sklearn.discriminant_analysis import QuadraticDiscriminantAnalysis
-sys.path.append('..')
-from auxiliary.data_processing import load_data, shape_data
-from auxiliary.kfold_crosseval import kfold_crosseval
+sys.path.append('auxiliary/')
+from data_processing import load_data, shape_data
+from kfold_crosseval import kfold_crosseval
 
 # settings
-level = 'match'
+# methods: 'log-reg', 'svm-linear', 'svm-rbf', 'decision-tree', 'random-forest',
+# 'naive-bayes', 'gradient-boosting', 'ada', 'ada2', 'knn',
+# 'discriminant-analysis'
+level = 'team'
 norm = True
 shuffle = True
 method = 'log-reg'
@@ -34,10 +37,24 @@ print('level: %s - norm: %r - shuffle: %r - method: %s' %
 # %% load data
 df = load_data(level)
 
+# choose features
+if level == 'match':
+    feats = ['Round', 'Season', 'Home Team', 'Away Team', 'Label',
+             'Position_x', 'Position_y', 'Offence_x', 'Offence_y',
+             'Defence_x', 'Defence_y', 'form_x', 'form_y', 'Diff_x', 'Diff_y',
+             'Home F4', 'Away F4']
+elif level == 'team':
+    feats = ['Round', 'Season', 'Game ID', 'Team', 'Label',
+             'Home', 'Away', 'Position',
+             'Offence', 'Defence', 'form', 'F4', 'Diff']
+
+# seasons for calibration
+df = df[df['Season'] < 2019]
+
 # %% Re-shape data
-X_train, y_train, df, init_feat, n_feats, groups = shape_data(
-    df, norm=norm, min_round=min_round)
-print('Number of feaures:', X_train.shape[1], init_feat)
+X_train, y_train, df, groups = shape_data(df, feats, norm=norm,
+                                          min_round=min_round)
+print('Number of feaures:', X_train.shape[1], feats)
 print('Number of obs:', X_train.shape[0])
 
 # %% Set parameters
@@ -45,8 +62,8 @@ if method == 'log-reg':
     params = np.sort(np.concatenate((np.logspace(-5, 8, 14),
                                      5 * np.logspace(-5, 8, 14)), axis=0))
 elif method == 'svm-linear':
-    params = np.sort(np.concatenate((np.logspace(-5, 8, 14),
-                                     5 * np.logspace(-5, 8, 14)), axis=0))
+    params = np.sort(np.concatenate((np.logspace(-5, 6, 12),
+                                     5 * np.logspace(-5, 6, 12)), axis=0))
 elif method == 'decision-tree':
     params = np.array([0])
 elif method == 'random-forest':
@@ -75,7 +92,8 @@ for j, param in enumerate(params):
         model = LogisticRegression(C=param, solver='liblinear',
                                    class_weight='balanced')
     elif method == 'svm-linear':
-        model = SVC(C=param, kernel='linear', class_weight='balanced')
+        model = SVC(C=param, kernel='linear', class_weight='balanced',
+                    probability=True)
     elif method == 'decision-tree':
         model = DecisionTreeClassifier(class_weight='balanced', random_state=10)
     elif method == 'random-forest':
@@ -91,8 +109,10 @@ for j, param in enumerate(params):
                                    learning_rate=0.6)
     elif method == 'knn':
         model = KNeighborsClassifier(n_neighbors=param)
-    elif method == 'distriminant-analysis':
+    elif method == 'discriminant-analysis':
         model = QuadraticDiscriminantAnalysis()
+    else:
+        sys.exit('method name is not valid')
 
     # apply k-fold cross validation
     accuracy[j], w_accuracy[j] = kfold_crosseval(X_train, y_train,
@@ -102,6 +122,8 @@ for j, param in enumerate(params):
 
 # %% Plots
 if params.shape[0] > 1:
+    print('Accuracy: ', np.round(np.max(accuracy), 4))
+    print('Weighted Accuracy: ', np.round(np.max(w_accuracy), 4))
     plt.figure()
     plt.plot(params, accuracy, label='accuracy')
     plt.plot(params, w_accuracy, label='w_accuracy')

@@ -18,10 +18,14 @@ from sklearn.ensemble import GradientBoostingClassifier, AdaBoostClassifier
 from sklearn.neighbors import KNeighborsClassifier
 from sklearn.discriminant_analysis import QuadraticDiscriminantAnalysis
 from sklearn.model_selection import GridSearchCV
-sys.path.append('..')
-from auxiliary.data_processing import load_data, shape_data
+sys.path.append('auxiliary/')
+from data_processing import load_data, shape_data
+
 
 # settings
+# methods: 'log-reg', 'svm-linear', 'svm-rbf', 'decision-tree', 'random-forest',
+# 'naive-bayes', 'gradient-boosting', 'ada', 'ada2', 'knn',
+# 'discriminant-analysis'
 level = 'match'
 norm = True
 shuffle = True
@@ -29,40 +33,53 @@ method = 'ada'
 min_round = 5
 nsplits = 5
 
-print('level: %s - norm: %r - shuffle: %r - method: %s' % 
+print('level: %s - norm: %r - shuffle: %r - method: %s' %
       (level, norm, shuffle, method))
 
-#%% load data
+# %% load data
 df = load_data(level)
 
-#%% Re-shape data
-X_train, y_train, df, init_feat, n_feats, groups = shape_data(df, norm=norm, 
-                                                        min_round=min_round)
-print('Number of feaures:', X_train.shape[1], init_feat)
+# choose features
+if level == 'match':
+    # 'Round', #'Season', 'Home Team', 'Away Team', 'Label',
+    feats = ['Position_x', 'Position_y', 'Offence_x', 'Offence_y',
+             'Defence_x', 'Defence_y', 'form_x', 'form_y', 'Diff_x', 'Diff_y',
+             'Home F4', 'Away F4']
+elif level == 'team':
+    # 'Round', 'Season', 'Game ID', 'Team', 'Label',
+    feats = ['Home', 'Away', 'Position', 'Offence', 'Defence',
+             'form', 'F4', 'Diff']
+
+# seasons for calibration
+df = df[df['Season'] < 2019]
+
+# %% Re-shape data
+X_train, y_train, df, groups = shape_data(df, feats, norm=norm,
+                                          min_round=min_round)
+print('Number of feaures:', X_train.shape[1], feats)
 print('Number of obs:', X_train.shape[0])
 
-#%%
 if level == 'team':
     kfold = GroupKFold(n_splits=nsplits)
     folditer = kfold.split(X_train, y_train, groups)
 else:
     kfold = StratifiedKFold(n_splits=nsplits, shuffle=shuffle, random_state=10)
     folditer = kfold.split(X_train, y_train)
-        
-#%% Set parameters   
+
+# %% Set parameters
 if method == 'log-reg':
     params = {'C': np.sort(np.concatenate((np.logspace(-5, 8, 14),
-                                     5*np.logspace(-5, 8, 14)), axis=0))}
+                           5 * np.logspace(-5, 8, 14)), axis=0))}
     model = LogisticRegression(solver='liblinear', class_weight='balanced')
 elif method == 'svm-linear':
-    params = {'C': np.sort(np.concatenate((np.logspace(-5, 8, 14),
-                                     5*np.logspace(-5, 8, 14)), axis=0))}
+    params = {'C': np.sort(np.concatenate(
+        (np.logspace(-5, 8, 14), 5 * np.logspace(-5, 8, 14)), axis=0))}
     model = SVC(kernel='linear', class_weight='balanced', random_state=10)
 elif method == 'svm-rbf':
-    params = {'C': np.sort(np.concatenate((np.logspace(-5, 8, 14),
-                                     5*np.logspace(-5, 8, 14)), axis=0)),
-              'gamma': np.sort(np.concatenate((np.logspace(-5, 8, 14),
-                                     5*np.logspace(-5, 8, 14)), axis=0))}
+    params = {'C': np.sort(np.concatenate((np.logspace(-5, 6, 12),
+                           5 * np.logspace(-5, 6, 12)), axis=0)),
+              'gamma': np.sort(np.concatenate((np.logspace(-5, 6, 12),
+                               5 * np.logspace(-5, 6, 12)), axis=0))}
     model = SVC(class_weight='balanced', random_state=10)
 elif method == 'decision-tree':
     params = {}
@@ -86,20 +103,26 @@ elif method == 'ada2':
 elif method == 'knn':
     params = {'n_neighbors': np.arange(3, 50, 2)}
     model = KNeighborsClassifier()
-elif method == 'discriminant-analysis': 
+elif method == 'discriminant-analysis':
     params = {}
     model = QuadraticDiscriminantAnalysis()
 else:
     sys.exit('Method not recognised')
 
-#%% Tune parameters
+# %% Tune parameters
 
-clf = GridSearchCV(model, params, cv=folditer,
+clf = GridSearchCV(model, params, cv=folditer, verbose=0, iid=False,
                    scoring=['accuracy', 'balanced_accuracy', 'roc_auc'],
                    refit='accuracy')
 clf.fit(X_train, y_train)
 
-#%% Plots
+if hasattr(clf.best_estimator_, 'feature_importances_'):
+    imp = clf.best_estimator_.feature_importances_
+    ii = np.argsort(imp)[::-1]
+    print('Feature Importance')
+    print([(feats[u], imp[u]) for u in ii])
+
+# %% Plots
 accuracy = clf.cv_results_['mean_test_accuracy']
 w_accuracy = clf.cv_results_['mean_test_balanced_accuracy']
 roc_auc = clf.cv_results_['mean_test_roc_auc']
@@ -108,8 +131,11 @@ if len(params.keys()) == 0:
     print('Weighted Accuracy: ', w_accuracy[0])
     print('ROC-AUC: ', roc_auc[0])
 elif len(params.keys()) == 1:
-    tmp = list(clf.get_params()['param_grid'])
-    params = clf.get_params()['param_grid'][tmp[0]]
+    tmp = list(clf.param_grid)
+    params = clf.param_grid[tmp[0]]
+    print('Accuracy: ', np.round(np.max(accuracy), 4))
+    print('Weighted Accuracy: ', np.round(np.max(w_accuracy), 4))
+    print('ROC-AUC: ', np.round(np.max(roc_auc), 4))
     plt.figure()
     plt.plot(params, accuracy, label='accuracy')
     plt.plot(params, w_accuracy, label='w_accuracy')
@@ -122,11 +148,20 @@ elif len(params.keys()) == 1:
     plt.title(method)
     plt.show()
 elif len(params.keys()) == 2:
+    print('Accuracy: ', np.round(np.max(accuracy), 4))
+    print('Weighted Accuracy: ', np.round(np.max(w_accuracy), 4))
+    print('ROC-AUC: ', np.round(np.max(roc_auc), 4))
+    tmp = list(clf.param_grid)
+    shape = (clf.param_grid[tmp[0]].shape[0],
+             clf.param_grid[tmp[1]].shape[0])
+    accuracy = accuracy.reshape(shape).T
+    w_accuracy = w_accuracy.reshape(shape).T
+
     plt.figure()
     plt.imshow(accuracy)
     plt.colorbar()
     plt.show()
-    
+
     plt.figure()
     plt.imshow(w_accuracy)
     plt.colorbar()

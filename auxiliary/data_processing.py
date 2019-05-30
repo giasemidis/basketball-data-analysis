@@ -10,33 +10,34 @@ import pandas as pd
 from normalise import normalise
 
 
-def shape_data(df, norm=True, min_round=5):
+def shape_data(df, feats, norm=True, min_round=5):
 
-    n = list(df.columns).index('Label')
-    # features start after the 'Label' column
-    init_feat = list(df.keys()[n + 1:])
-    n_feats = len(init_feat)
     # ignore early games in the season, as they do not contain the 'form'
     # feature.
-    ii = df['Round'].values > min_round
-    # make the Design table
-    X_train = df.iloc[ii, (n + 1):].values
-    # normalise the Design table if required
-    if norm:
-        X_train = normalise(X_train)
-    # extract the tags
-    y_train = df[ii]['Label'].values
-    # if labels are 1 and 2, set them to 0-1
-    if 2 in np.unique(y_train):
-        y_train = y_train - 1
+    ii = df['Round'] > min_round
+
     # filter out the games ignored
     df = df[ii]
     df.reset_index(drop=True, inplace=True)
 
+    # make the Design table
+    X_train = df[feats].values
+
+    # normalise the Design table if required
+    if norm:
+        X_train = normalise(X_train)
+
+    # extract the tags
+    y_train = df['Label'].values
+
+    # if labels are 1 and 2, set them to 0-1
+    if 2 in np.unique(y_train):
+        y_train = y_train - 1
+
     # define the groups matches if processing 'team' level classification
     groups = df['Game ID'].values if 'Game ID' in df.keys() else None
 
-    return X_train, y_train, df, init_feat, n_feats, groups
+    return X_train, y_train, df, groups
 
 
 def load_data(level):
