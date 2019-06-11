@@ -10,11 +10,14 @@ import sys
 from matplotlib import pyplot as plt
 from sklearn.svm import SVC
 from sklearn.ensemble import AdaBoostClassifier
-sys.path.append('..')
-from auxiliary.data_processing import load_data, shape_data
-from auxiliary.kfold_crosseval import kfold_crosseval
+sys.path.append('auxiliary/')
+from data_processing import load_data, shape_data
+from kfold_crosseval import kfold_crosseval
 
 # settings
+# methods: 'log-reg', 'svm-linear', 'svm-rbf', 'decision-tree', 'random-forest',
+# 'naive-bayes', 'gradient-boosting', 'ada', 'ada2', 'knn',
+# 'discriminant-analysis'
 level = 'match'
 norm = True
 shuffle = True
@@ -27,11 +30,24 @@ print('norm: %r - shuffle: %r - method: %s' % (norm, shuffle, method))
 # %% load data
 df = load_data(level)
 
-# %% Re-shape data
-X_train, y_train, df, init_feat, n_feats, groups = shape_data(
-    df, norm=norm, min_round=min_round)
+# choose features
+if level == 'match':
+    feats = ['Round', 'Season', 'Home Team', 'Away Team', 'Label',
+             'Position_x', 'Position_y', 'Offence_x', 'Offence_y',
+             'Defence_x', 'Defence_y', 'form_x', 'form_y', 'Diff_x', 'Diff_y',
+             'Home F4', 'Away F4']
+elif level == 'team':
+    feats = ['Round', 'Season', 'Game ID', 'Team', 'Label',
+             'Home', 'Away', 'Position',
+             'Offence', 'Defence', 'form', 'F4', 'Diff']
 
-print('Number of feaures:', X_train.shape[1], init_feat)
+# seasons for calibration
+df = df[df['Season'] < 2019]
+
+# %% Re-shape data
+X_train, y_train, df, groups = shape_data(df, norm=norm, min_round=min_round)
+
+print('Number of feaures:', X_train.shape[1], feats)
 print('Number of obs:', X_train.shape[0])
 
 # %% Set parameters
