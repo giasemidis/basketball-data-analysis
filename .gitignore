@@ -1,11 +1,13 @@
 # local files
 *.txt
+!requirements.txt
 *.csv
-notebook*.py
 *.npz
-*.npY
+*.npy
+notebook*.py
 
 # local folders
-data
 __pycache__
-
+data
+bin
+paper
