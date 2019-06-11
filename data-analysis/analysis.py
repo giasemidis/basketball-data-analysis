@@ -116,7 +116,7 @@ def main(year):
         rand = np.random.randint(1, 3, nmatches)
         random[i] = np.sum(data['Actual'].values == rand)
 
-    # data = data[data['Round'] != 26]
+    # data = data[~np.in1d(data['Round'], [1, 2, 3, 4, 5, 26])]
     print('Home wins  :', np.sum(data['Actual'] == data['Home Wins']))
     print('Top4 wins  :', np.sum(data['Actual'] == data['F4 Wins']))
     print('Persistance:', np.sum(data['Actual'] == data['Persistence']))

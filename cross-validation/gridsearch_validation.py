@@ -41,7 +41,7 @@ df = load_data(level)
 
 # choose features
 if level == 'match':
-    # 'Round', #'Season', 'Home Team', 'Away Team', 'Label',
+    # 'Round', 'Season', 'Home Team', 'Away Team', 'Label',
     feats = ['Position_x', 'Position_y', 'Offence_x', 'Offence_y',
              'Defence_x', 'Defence_y', 'form_x', 'form_y', 'Diff_x', 'Diff_y',
              'Home F4', 'Away F4']
