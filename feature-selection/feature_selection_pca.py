@@ -18,8 +18,8 @@ from sklearn.ensemble import AdaBoostClassifier
 # from sklearn.naive_bayes import GaussianNB
 from sklearn.decomposition import PCA
 from matplotlib import pyplot as plt
-sys.path.append('..')
-from auxiliary.data_processing import load_data, shape_data
+sys.path.append('auxiliary/')
+from data_processing import load_data, shape_data
 # from auxiliary.kfold_crosseval import kfold_crosseval
 
 level = 'match'
@@ -28,15 +28,33 @@ norm = True
 min_round = 5
 nsplits = 5
 # model = GaussianNB()
-# model= AdaBoostClassifier(n_estimators=115, random_state=10,
-#                          learning_rate=1.1)
+# model = AdaBoostClassifier(n_estimators=115, random_state=10,
+#                           learning_rate=1.1)
 
 # %% load data
 df = load_data(level)
 
+# choose features
+if level == 'match':
+    # 'Round', 'Season', 'Home Team', 'Away Team', 'Label',
+    feats = ['Position_x', 'Position_y', 'Offence_x', 'Offence_y',
+             'Defence_x', 'Defence_y',
+             'form_x', 'form_y',
+             'Diff_x', 'Diff_y',
+             'Home F4', 'Away F4']
+elif level == 'team':
+    # 'Round', 'Season', 'Game ID', 'Team', 'Label',
+    feats = ['Home', 'Away', 'Position', 'Offence', 'Defence',
+             'form',
+             'F4', 'Diff']
+n_feats = len(feats)
+
+# seasons for calibration
+df = df[df['Season'] < 2019]
+
 # %% Re-shape data
-X_train, y_train, df, init_feat, n_feats, groups = shape_data(
-    df, norm=norm, min_round=min_round)
+X_train, y_train, df, groups = shape_data(df, feats, norm=norm,
+                                          min_round=min_round)
 
 # %% Apply PCA and then k-fold cross validation
 
