@@ -60,4 +60,5 @@ def load_data(level):
                                axis=0)
     if 'Season' not in df.keys():
         df.insert(1, 'Season', seasoncol)
+    df.reset_index(drop=True, inplace=True)
     return df
