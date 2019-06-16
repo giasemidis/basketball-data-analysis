@@ -74,7 +74,7 @@ for n in range(n_feats):
 #                                                 shuffle=shuffle)
     kfold = StratifiedKFold(n_splits=nsplits, shuffle=shuffle, random_state=10)
     folditer = kfold.split(X_train, y_train)
-    clf = GridSearchCV(model, params, cv=folditer,
+    clf = GridSearchCV(model, params, cv=folditer, iid=False,
                        scoring=['accuracy', 'balanced_accuracy', 'roc_auc'],
                        refit='accuracy')
     clf.fit(X_train, y_train)
