@@ -6,6 +6,7 @@ Created on Sat Feb  2 19:25:38 2019
 """
 import numpy as np
 import sys
+from tqdm import tqdm
 # from sklearn.linear_model import LogisticRegression
 # from sklearn.ensemble import RandomForestClassifier
 # from sklearn.tree import DecisionTreeClassifier
@@ -59,19 +60,13 @@ X_train, y_train, df, groups = shape_data(df, feats, norm=norm,
 # %% Apply PCA and then k-fold cross validation
 
 XX = X_train.copy()
-params = {'n_estimators': np.arange(5, 200, 1),
-          'learning_rate': np.arange(0.3, 1.5, 0.1)}
+params = {'n_estimators': np.arange(5, 200, 5)}
+# 'learning_rate': np.arange(0.3, 1.5, 0.1)}
 model = AdaBoostClassifier(random_state=10)
 scores = np.zeros((n_feats, 2))
-for n in range(n_feats):
-    print(n)
+for n in tqdm(range(n_feats)):
     pca = PCA(n_components=n + 1)
     X_train = pca.fit_transform(XX)
-#    scores[n, 0], scores[n, 1] = kfold_crosseval(X_train, y_train, df,
-#                                                 nsplits, groups=groups,
-#                                                 model=model,
-#                                                 level=level,
-#                                                 shuffle=shuffle)
     kfold = StratifiedKFold(n_splits=nsplits, shuffle=shuffle, random_state=10)
     folditer = kfold.split(X_train, y_train)
     clf = GridSearchCV(model, params, cv=folditer, iid=False,
@@ -87,6 +82,8 @@ x = np.arange(1, n_feats + 1, dtype=int)
 plt.figure()
 plt.plot(x, scores[:, 0], label='Accuracy')
 plt.plot(x, scores[:, 1], label='W-Accuracy')
+plt.xlabel('Number of components')
+plt.ylabel('Score')
 plt.xticks(x, x)
 plt.grid()
 plt.legend()
