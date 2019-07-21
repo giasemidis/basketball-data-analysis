@@ -95,7 +95,7 @@ elif method == 'gradient-boosting':
     model = GradientBoostingClassifier(random_state=10)
 elif method == 'ada':
     params = {'n_estimators': np.arange(5, 200, 1)}
-    model = AdaBoostClassifier(random_state=10, learning_rate=1.1)
+    model = AdaBoostClassifier(random_state=10, learning_rate=1)
 elif method == 'ada2':
     params = {'n_estimators': np.arange(5, 200, 1),
               'learning_rate': np.arange(0.3, 1.5, 0.1)}
@@ -111,9 +111,9 @@ else:
 
 # %% Tune parameters
 
-clf = GridSearchCV(model, params, cv=folditer, verbose=0, iid=False,
+clf = GridSearchCV(model, params, cv=folditer, verbose=1, iid=False,
                    scoring=['accuracy', 'balanced_accuracy', 'roc_auc'],
-                   refit='accuracy')
+                   refit='accuracy', n_jobs=-1)
 clf.fit(X_train, y_train)
 
 if hasattr(clf.best_estimator_, 'feature_importances_'):
@@ -133,9 +133,12 @@ if len(params.keys()) == 0:
 elif len(params.keys()) == 1:
     tmp = list(clf.param_grid)
     params = clf.param_grid[tmp[0]]
-    print('Accuracy: ', np.round(np.max(accuracy), 4))
-    print('Weighted Accuracy: ', np.round(np.max(w_accuracy), 4))
-    print('ROC-AUC: ', np.round(np.max(roc_auc), 4))
+    print('Accuracy: %.4f at %.4g' %
+          (np.max(accuracy), params[np.argmax(accuracy)]))
+    print('Weighted Accuracy: %.4f at %.4g' %
+          (np.max(w_accuracy), params[np.argmax(w_accuracy)]))
+    print('ROC-AUC: %.4f at %.4g' %
+          (np.max(roc_auc), params[np.argmax(roc_auc)]))
     plt.figure()
     plt.plot(params, accuracy, label='accuracy')
     plt.plot(params, w_accuracy, label='w_accuracy')
