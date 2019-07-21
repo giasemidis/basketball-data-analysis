@@ -39,13 +39,13 @@ df = load_data(level)
 
 # choose features
 if level == 'match':
-    feats = ['Round', 'Season', 'Home Team', 'Away Team', 'Label',
-             'Position_x', 'Position_y', 'Offence_x', 'Offence_y',
+    # 'Round', 'Season', 'Home Team', 'Away Team', 'Label',
+    feats = ['Position_x', 'Position_y', 'Offence_x', 'Offence_y',
              'Defence_x', 'Defence_y', 'form_x', 'form_y', 'Diff_x', 'Diff_y',
              'Home F4', 'Away F4']
 elif level == 'team':
-    feats = ['Round', 'Season', 'Game ID', 'Team', 'Label',
-             'Home', 'Away', 'Position',
+    # 'Round', 'Season', 'Game ID', 'Team', 'Label',
+    feats = ['Home', 'Away', 'Position',
              'Offence', 'Defence', 'form', 'F4', 'Diff']
 
 # seasons for calibration
