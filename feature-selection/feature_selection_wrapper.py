@@ -6,6 +6,7 @@ Created on Sat Feb  2 19:25:38 2019
 """
 import numpy as np
 import sys
+from tqdm import tqdm
 from itertools import combinations
 # from sklearn.linear_model import LogisticRegression
 # from sklearn.ensemble import RandomForestClassifier
@@ -25,8 +26,8 @@ norm = True
 min_round = 5
 nsplits = 5
 # model = GaussianNB()
-model = AdaBoostClassifier(n_estimators=115, random_state=10,
-                           learning_rate=1.1)
+model = AdaBoostClassifier(n_estimators=121, random_state=10,
+                           learning_rate=1.0)
 
 # %% load data
 df = load_data(level)
@@ -64,9 +65,12 @@ for u in range(1, n_feats + 1):
             allcombs.append(list(c))
 
 scores = np.zeros((len(allcombs), 2))
+nc = 0
+for ii, comb in enumerate(tqdm(allcombs)):
 
-for ii, comb in enumerate(allcombs):
-    print('Number of features:', len(comb))
+    if len(comb) > nc:
+        tqdm.write('Number of features: %d' % len(comb))
+        nc = len(comb)
     indx, feats = [], []
 
     X_train = df[comb].values
@@ -77,6 +81,7 @@ for ii, comb in enumerate(allcombs):
                                                    level=level,
                                                    shuffle=shuffle)
 
+np.savez('output/wrapper', scores=scores, features=np.array(allcombs))
 # Sort best combinations
 ll = np.argsort(scores[:, 0])[::-1]
 sortcombs = [allcombs[u] for u in ll]
