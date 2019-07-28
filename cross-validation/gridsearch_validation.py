@@ -29,7 +29,7 @@ from data_processing import load_data, shape_data
 level = 'match'
 norm = True
 shuffle = True
-method = 'ada'
+method = 'ada2'
 min_round = 5
 nsplits = 5
 
@@ -98,7 +98,19 @@ elif method == 'ada':
     model = AdaBoostClassifier(random_state=10, learning_rate=1)
 elif method == 'ada2':
     params = {'n_estimators': np.arange(5, 200, 1),
-              'learning_rate': np.arange(0.3, 1.5, 0.1)}
+              'learning_rate': np.concatenate(([0.01, 0.05],
+                                               np.arange(0.1, 2.1, 0.1)))}
+    model = AdaBoostClassifier(random_state=10)
+elif method == 'ada3':
+    params = {'n_estimators': np.arange(5, 200, 2),
+              'learning_rate': np.arange(0.2, 2.1, 0.2),
+              'base_estimator': [DecisionTreeClassifier(max_depth=1),
+                                 DecisionTreeClassifier(max_depth=5),
+                                 DecisionTreeClassifier(max_depth=10),
+                                 DecisionTreeClassifier(max_depth=15),
+                                 DecisionTreeClassifier(max_depth=20),
+                                 DecisionTreeClassifier(max_depth=25),
+                                 DecisionTreeClassifier(max_depth=30)]}
     model = AdaBoostClassifier(random_state=10)
 elif method == 'knn':
     params = {'n_neighbors': np.arange(3, 50, 2)}
@@ -151,14 +163,35 @@ elif len(params.keys()) == 1:
     plt.title(method)
     plt.show()
 elif len(params.keys()) == 2:
-    print('Accuracy: ', np.round(np.max(accuracy), 4))
-    print('Weighted Accuracy: ', np.round(np.max(w_accuracy), 4))
-    print('ROC-AUC: ', np.round(np.max(roc_auc), 4))
-    tmp = list(clf.param_grid)
+
+    # according to some references GridSearchCV() performs search in
+    # alphabetical order of the parameters.
+    tmp = sorted(list(clf.param_grid.keys()))
     shape = (clf.param_grid[tmp[0]].shape[0],
              clf.param_grid[tmp[1]].shape[0])
-    accuracy = accuracy.reshape(shape).T
-    w_accuracy = w_accuracy.reshape(shape).T
+    accuracy = accuracy.reshape(shape)
+    w_accuracy = w_accuracy.reshape(shape)
+    np.savez('output/%s' % method, accuracy=accuracy,
+             w_accuracy=w_accuracy,
+             params1=clf.param_grid[tmp[0]], params2=clf.param_grid[tmp[1]])
+
+    print('Accuracy: %.4f at %s=%.4g and %s=%.4g' %
+          (clf.best_score_, tmp[0], clf.best_params_[tmp[0]],
+           tmp[1], clf.best_params_[tmp[1]]))
+
+    inds = np.unravel_index(np.argmax(accuracy), shape)
+    print('Accuracy: %.4f at %s=%.4g and %s=%.4g' %
+          (np.max(accuracy),
+           tmp[0], clf.param_grid[tmp[0]][inds[0]],
+           tmp[1], clf.param_grid[tmp[1]][inds[1]]))
+
+    inds = np.unravel_index(np.argmax(w_accuracy), shape)
+    print('Weighted Accuracy: %.4f at %s=%.4g and %s=%.4g' %
+          (np.max(w_accuracy),
+           tmp[0], clf.param_grid[tmp[0]][inds[0]],
+           tmp[1], clf.param_grid[tmp[1]][inds[1]]))
+
+    print('ROC-AUC: %.4f' % np.max(roc_auc))
 
     plt.figure()
     plt.imshow(accuracy)
@@ -169,3 +202,9 @@ elif len(params.keys()) == 2:
     plt.imshow(w_accuracy)
     plt.colorbar()
     plt.show()
+elif len(params.keys()) == 3:
+    print('Accuracy: %.4f at %s' % (clf.best_score_, clf.best_estimator_))
+    np.savez('output/%s' % method,
+             accuracy=clf.cv_results_['mean_test_accuracy'],
+             w_accuracy=clf.cv_results_['mean_test_balanced_accuracy'],
+             params=clf.cv_results_['params'])
