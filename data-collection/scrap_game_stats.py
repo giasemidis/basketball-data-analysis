@@ -5,23 +5,28 @@ Created on Sat Feb  9 20:08:28 2019
 @author: Georgios
 """
 import argparse
-import os
+from tqdm import trange
+# from tqdm import tqdm
 from bs4 import BeautifulSoup
 import requests
 import sys
 from datetime import datetime
 import re
 import pandas as pd
+sys.path.append('auxiliary/')
+from argparser_types import is_valid_parent_path
 
 
 def main(season, filename):
     season = season - 1
     regex = re.compile(r'score [a-z\s]*pts[a-z\s]*')
     allteamstats = []
-    header = ['Season', 'Round', 'Date', 'Team', 'Where', 'Offence', 'Defence']
+    season_str = '%d-%d' % (season, season + 1)
+    header = ['Season', 'Round', 'GameID', 'Date', 'Team', 'Where',
+              'Offence', 'Defence']
 
-    for game_round in range(1, 31):
-        print('Processing round %d' % game_round)
+    for game_round in trange(1, 31):
+        # tqdm.write('Processing round %d' % game_round)
         url = ('http://www.euroleague.net/main/results?gamenumber=%d&'
                'phasetypecode=RS&seasoncode=E%d' % (game_round, season))
         try:
@@ -32,6 +37,9 @@ def main(season, filename):
         soup = BeautifulSoup(data, 'html.parser')
 
         for game in soup.find_all('div', attrs={'class': 'game played'}):
+            data_code = game.attrs['data-code']
+            gameid = '%d_%d_%d_%s' % (season, season + 1,
+                                      game_round, data_code)
             home_team = game.find_all('span', attrs={'class': 'name'})[0].string
             away_team = game.find_all('span', attrs={'class': 'name'})[1].string
 
@@ -49,12 +57,14 @@ def main(season, filename):
             date = date.replace(year=yr)
             date_str = datetime.strftime(date, '%Y-%m-%d %H:%M:%S')
 
-            home = {'Season': str(season) + '-' + str(season + 1),
+            home = {'Season': season_str,
                     'Round': game_round,
+                    'GameID': gameid,
                     'Date': date_str, 'Team': home_team, 'Where': 'Home',
                     'Offence': home_score, 'Defence': away_score}
-            away = {'Season': str(season) + '-' + str(season + 1),
+            away = {'Season': season_str,
                     'Round': game_round,
+                    'GameID': gameid,
                     'Date': date_str, 'Team': away_team, 'Where': 'Away',
                     'Offence': away_score, 'Defence': home_score}
 
@@ -112,16 +122,11 @@ def main(season, filename):
 
 if __name__ == "__main__":
     parser = argparse.ArgumentParser()
-    parser.add_argument('-s', '--season', type=int,
+    parser.add_argument('-s', '--season', type=int, required=True,
                         help="the ending year of the season")
-    parser.add_argument('-o', '--output', type=str,
+    parser.add_argument('-o', '--output', required=True,
+                        type=lambda x: is_valid_parent_path(parser, x),
                         help="the full filepath of the output file")
     args = parser.parse_args()
 
-    if args.season is None or args.output is None:
-        parser.print_help()
-    else:
-        if not os.path.isdir(os.path.split(args.output)[0]):
-            sys.exit('Warning: path of output file not valid.')
-        else:
-            main(args.season, args.output)
+    main(args.season, args.output)
