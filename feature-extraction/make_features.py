@@ -245,9 +245,7 @@ def make_team_features(data, standings, f4Teams=[], year=None):
         label = np.where(data['Home Score'] > data['Away Score'], 1, 2)
         game_feats.insert(3, 'Label', label)
 
-    game_id = [np.abs(hash(x['Home Team'] + x['Away Team'] + str(year))) for
-               indx, x in game_feats.iterrows()]
-    game_feats['Game ID'] = game_id
+    game_feats['Game ID'] = data['GameID']
 
     home = game_feats[['Round', 'Game ID', 'Home Team', 'Position_x',
                        'Offence_x', 'Defence_x', 'form_x', 'Home F4']]
