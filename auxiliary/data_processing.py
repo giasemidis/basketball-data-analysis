@@ -43,13 +43,13 @@ def shape_data(df, feats, norm=True, min_round=5):
 def load_data(level):
     '''load features'''
     if level == 'match':
-        df1 = pd.read_csv('data/match_level_features_2016_2017.csv')
-        df2 = pd.read_csv('data/match_level_features_2017_2018.csv')
-        df3 = pd.read_csv('data/match_level_features_2018_2019.csv')
+        df1 = pd.read_csv('features/match_level_features_2016_2017.csv')
+        df2 = pd.read_csv('features/match_level_features_2017_2018.csv')
+        df3 = pd.read_csv('features/match_level_features_2018_2019.csv')
     elif level == 'team':
-        df1 = pd.read_csv('data/team_level_features_2016_2017.csv')
-        df2 = pd.read_csv('data/team_level_features_2017_2018.csv')
-        df3 = pd.read_csv('data/team_level_features_2018_2019.csv')
+        df1 = pd.read_csv('features/team_level_features_2016_2017.csv')
+        df2 = pd.read_csv('features/team_level_features_2017_2018.csv')
+        df3 = pd.read_csv('features/team_level_features_2018_2019.csv')
     else:
         sys.exit('Invalid level of analysis')
 
