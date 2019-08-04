@@ -5,13 +5,15 @@ Created on Thu Oct  4 19:52:26 2018
 @author: Georgios
 """
 import argparse
-import os
+from tqdm import trange
 from bs4 import BeautifulSoup
 import requests
 import re
 import pandas as pd
 import sys
 from datetime import datetime
+sys.path.append('auxiliary/')
+from argparser_types import is_valid_parent_path
 
 
 def main(season, filename):
@@ -21,13 +23,14 @@ def main(season, filename):
     Saves data to file.
     '''
     season = season - 1
-    headers = ['Round', 'Date', 'Home Team', 'Away Team',
+    headers = ['Season', 'Round', 'GameID', 'Date', 'Home Team', 'Away Team',
                'Home Score', 'Away Score']
     results = []
     regex = re.compile(r'score [a-z\s]*pts[a-z\s]*')
-    bb = []
-    for game_round in range(1, 31):
-        print('Processing round %d' % game_round)
+    # bb = []
+    season_str = '%d-%d' % (season, season + 1)
+    for game_round in trange(1, 31):
+        # print('Processing round %d' % game_round)
         url = ('http://www.euroleague.net/main/results?gamenumber=%d&'
                'phasetypecode=RS&seasoncode=E%d' % (game_round, season))
         try:
@@ -37,6 +40,9 @@ def main(season, filename):
         data = r.text
         soup = BeautifulSoup(data, 'html.parser')
         for game in soup.find_all('div', attrs={'class': 'game played'}):
+            data_code = game.attrs['data-code']
+            gameid = '%d_%d_%d_%s' % (season, season + 1,
+                                      game_round, data_code)
             home_team = game.find_all('span', attrs={'class': 'name'})[0].string
             away_team = game.find_all('span', attrs={'class': 'name'})[1].string
             scores = game.find_all('span', attrs={'class': regex})
@@ -50,16 +56,14 @@ def main(season, filename):
 
             date_str = game.find('span', attrs={'class': 'date'}).string
             date = datetime.strptime(date_str, '%B %d %H:%M CET')
-            if date.month <= 12 and date.month > 8:
-                yr = season
-            else:
-                yr = season + 1
+            yr = season if date.month <= 12 and date.month > 8 else season + 1
             date = date.replace(year=yr)
             date_str = datetime.strftime(date, '%Y-%m-%d %H:%M:%S')
-            status = game.find('span', attrs={'class': 'final'}).string.strip()
+            # status = game.find('span', attrs={'class': 'final'}).string.strip()
 
-            bb.append(status)
-            results.append([game_round, date_str, home_team, away_team,
+            # bb.append(status)
+            results.append([season_str, game_round, gameid, date_str,
+                            home_team, away_team,
                             home_score, away_score])
 
     print('Convert to dataframe')
@@ -72,16 +76,11 @@ def main(season, filename):
 
 if __name__ == "__main__":
     parser = argparse.ArgumentParser()
-    parser.add_argument('-s', '--season', type=int,
+    parser.add_argument('-s', '--season', required=True, type=int,
                         help="the ending year of the season")
-    parser.add_argument('-o', '--output', type=str,
+    parser.add_argument('-o', '--output', required=True,
+                        type=lambda x: is_valid_parent_path(parser, x),
                         help="the full filepath of the output file")
     args = parser.parse_args()
 
-    if args.season is None or args.output is None:
-        parser.print_help()
-    else:
-        if not os.path.isdir(os.path.split(args.output)[0]):
-            sys.exit('Warning: path of output file not valid.')
-        else:
-            main(args.season, args.output)
+    main(args.season, args.output)

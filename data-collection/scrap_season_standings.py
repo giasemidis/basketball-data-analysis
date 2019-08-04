@@ -5,12 +5,14 @@ Created on Thu Oct  4 19:52:26 2018
 @author: Georgios
 """
 import argparse
-import os
 from bs4 import BeautifulSoup
 import requests
 import re
+from tqdm import trange
 import pandas as pd
 import sys
+sys.path.append('auxiliary/')
+from argparser_types import is_valid_parent_path
 
 
 def main(season, filename):
@@ -22,8 +24,8 @@ def main(season, filename):
     headers = ['Round', 'Position', 'Club Code', 'Club Name', 'Wins', 'Losses',
                'Offence', 'Defence', 'Points Diff']
     standings = []
-    for game_round in range(1, 31):
-        print('Processing round %d' % game_round)
+    for game_round in trange(1, 31):
+        # print('Processing round %d' % game_round)
         url = ('http://www.euroleague.net/main/standings?gamenumber=%d&'
                'phasetypecode=RS++++++++&seasoncode=E%d'
                % (game_round, season - 1))
@@ -65,16 +67,11 @@ def main(season, filename):
 
 if __name__ == "__main__":
     parser = argparse.ArgumentParser()
-    parser.add_argument('-s', '--season', type=int,
+    parser.add_argument('-s', '--season', required=True, type=int,
                         help="the ending year of the season")
-    parser.add_argument('-o', '--output', type=str,
+    parser.add_argument('-o', '--output', required=True,
+                        type=lambda x: is_valid_parent_path(parser, x),
                         help="the full filepath of the output file")
     args = parser.parse_args()
 
-    if args.season is None or args.output is None:
-        parser.print_help()
-    else:
-        if not os.path.isdir(os.path.split(args.output)[0]):
-            sys.exit('Warning: path of output file not valid.')
-        else:
-            main(args.season, args.output)
+    main(args.season, args.output)
