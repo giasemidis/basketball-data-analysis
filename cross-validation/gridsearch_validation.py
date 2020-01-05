@@ -74,13 +74,15 @@ if method == 'log-reg':
 elif method == 'svm-linear':
     params = {'C': np.sort(np.concatenate(
         (np.logspace(-5, 8, 14), 5 * np.logspace(-5, 8, 14)), axis=0))}
-    model = SVC(kernel='linear', class_weight='balanced', random_state=10)
+    model = SVC(kernel='linear', class_weight='balanced', random_state=10,
+                max_iter=1000)
 elif method == 'svm-rbf':
     params = {'C': np.sort(np.concatenate((np.logspace(-5, 6, 12),
                            5 * np.logspace(-5, 6, 12)), axis=0)),
               'gamma': np.sort(np.concatenate((np.logspace(-5, 6, 12),
                                5 * np.logspace(-5, 6, 12)), axis=0))}
-    model = SVC(class_weight='balanced', random_state=10)
+    model = SVC(kernel='rbf', class_weight='balanced', random_state=10,
+                max_iter=1000)
 elif method == 'decision-tree':
     params = {}
     model = DecisionTreeClassifier(class_weight='balanced', random_state=10)
