@@ -1,9 +1,3 @@
-# -*- coding: utf-8 -*-
-"""
-Created on Thu Oct  4 19:52:26 2018
-
-@author: Georgios
-"""
 import argparse
 from tqdm import trange
 from bs4 import BeautifulSoup
@@ -12,27 +6,25 @@ import re
 import pandas as pd
 import sys
 from datetime import datetime
-sys.path.append('auxiliary/')
+sys.path.append('auxiliary/')  # noqa: E402
 from argparser_types import is_valid_parent_path
 
 
-def main(season, filename):
+def main(season, n_rounds, filename):
     '''
     Scraps the results of the Euroleague games from the Euroleague's official
     site for the input season.
     Saves data to file.
     '''
-    season = season - 1
     headers = ['Season', 'Round', 'GameID', 'Date', 'Home Team', 'Away Team',
                'Home Score', 'Away Score']
     results = []
     regex = re.compile(r'score [a-z\s]*pts[a-z\s]*')
-    # bb = []
-    season_str = '%d-%d' % (season, season + 1)
-    for game_round in trange(1, 31):
+    season_str = '%d-%d' % (season - 1, season)
+    for game_round in trange(1, n_rounds + 1):
         # print('Processing round %d' % game_round)
         url = ('http://www.euroleague.net/main/results?gamenumber=%d&'
-               'phasetypecode=RS&seasoncode=E%d' % (game_round, season))
+               'phasetypecode=RS&seasoncode=E%d' % (game_round, season - 1))
         try:
             r = requests.get(url)
         except ConnectionError:
@@ -41,7 +33,7 @@ def main(season, filename):
         soup = BeautifulSoup(data, 'html.parser')
         for game in soup.find_all('div', attrs={'class': 'game played'}):
             data_code = game.attrs['data-code']
-            gameid = '%d_%d_%d_%s' % (season, season + 1,
+            gameid = '%d_%d_%d_%s' % (season - 1, season,
                                       game_round, data_code)
             home_team = game.find_all('span', attrs={'class': 'name'})[0].string
             away_team = game.find_all('span', attrs={'class': 'name'})[1].string
@@ -56,12 +48,10 @@ def main(season, filename):
 
             date_str = game.find('span', attrs={'class': 'date'}).string
             date = datetime.strptime(date_str, '%B %d %H:%M CET')
-            yr = season if date.month <= 12 and date.month > 8 else season + 1
+            yr = season - 1 if date.month <= 12 and date.month > 8 else season
             date = date.replace(year=yr)
             date_str = datetime.strftime(date, '%Y-%m-%d %H:%M:%S')
-            # status = game.find('span', attrs={'class': 'final'}).string.strip()
 
-            # bb.append(status)
             results.append([season_str, game_round, gameid, date_str,
                             home_team, away_team,
                             home_score, away_score])
@@ -81,6 +71,10 @@ if __name__ == "__main__":
     parser.add_argument('-o', '--output', required=True,
                         type=lambda x: is_valid_parent_path(parser, x),
                         help="the full filepath of the output file")
+    parser.add_argument('-n', '--n-rounds', default=34,
+                        type=int,
+                        help="The number of regular season rounds "
+                             "in the season")
     args = parser.parse_args()
 
-    main(args.season, args.output)
+    main(args.season, args.n_rounds, args.output)

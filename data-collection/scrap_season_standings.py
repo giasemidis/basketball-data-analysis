@@ -11,11 +11,11 @@ import re
 from tqdm import trange
 import pandas as pd
 import sys
-sys.path.append('auxiliary/')
+sys.path.append('auxiliary/')  # noqa: E402
 from argparser_types import is_valid_parent_path
 
 
-def main(season, filename):
+def main(season, n_rounds, filename):
     '''
     Scraps the standings of the Euroleague games from the Euroleague's official
     site for the input season.
@@ -24,7 +24,7 @@ def main(season, filename):
     headers = ['Round', 'Position', 'Club Code', 'Club Name', 'Wins', 'Losses',
                'Offence', 'Defence', 'Points Diff']
     standings = []
-    for game_round in trange(1, 31):
+    for game_round in trange(1, n_rounds + 1):
         # print('Processing round %d' % game_round)
         url = ('http://www.euroleague.net/main/standings?gamenumber=%d&'
                'phasetypecode=RS++++++++&seasoncode=E%d'
@@ -72,6 +72,10 @@ if __name__ == "__main__":
     parser.add_argument('-o', '--output', required=True,
                         type=lambda x: is_valid_parent_path(parser, x),
                         help="the full filepath of the output file")
+    parser.add_argument('-n', '--n-rounds', default=34,
+                        type=int,
+                        help="The number of regular season rounds "
+                             "in the season")
     args = parser.parse_args()
 
-    main(args.season, args.output)
+    main(args.season, args.n_rounds, args.output)

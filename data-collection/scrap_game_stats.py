@@ -1,9 +1,3 @@
-# -*- coding: utf-8 -*-
-"""
-Created on Sat Feb  9 20:08:28 2019
-
-@author: Georgios
-"""
 import argparse
 from tqdm import trange
 # from tqdm import tqdm
@@ -13,22 +7,20 @@ import sys
 from datetime import datetime
 import re
 import pandas as pd
-sys.path.append('auxiliary/')
+sys.path.append('auxiliary/')  # noqa: E402
 from argparser_types import is_valid_parent_path
 
 
-def main(season, filename):
-    season = season - 1
+def main(season, n_rounds, filename):
     regex = re.compile(r'score [a-z\s]*pts[a-z\s]*')
     allteamstats = []
-    season_str = '%d-%d' % (season, season + 1)
+    season_str = '%d-%d' % (season - 1, season)
     header = ['Season', 'Round', 'GameID', 'Date', 'Team', 'Where',
               'Offence', 'Defence']
 
-    for game_round in trange(1, 31):
-        # tqdm.write('Processing round %d' % game_round)
+    for game_round in trange(1, n_rounds + 1):
         url = ('http://www.euroleague.net/main/results?gamenumber=%d&'
-               'phasetypecode=RS&seasoncode=E%d' % (game_round, season))
+               'phasetypecode=RS&seasoncode=E%d' % (game_round, season - 1))
         try:
             r = requests.get(url)
         except ConnectionError:
@@ -38,7 +30,7 @@ def main(season, filename):
 
         for game in soup.find_all('div', attrs={'class': 'game played'}):
             data_code = game.attrs['data-code']
-            gameid = '%d_%d_%d_%s' % (season, season + 1,
+            gameid = '%d_%d_%d_%s' % (season - 1, season,
                                       game_round, data_code)
             home_team = game.find_all('span', attrs={'class': 'name'})[0].string
             away_team = game.find_all('span', attrs={'class': 'name'})[1].string
@@ -53,7 +45,7 @@ def main(season, filename):
 
             date_str = game.find('span', attrs={'class': 'date'}).string
             date = datetime.strptime(date_str, '%B %d %H:%M CET')
-            yr = season if date.month <= 12 and date.month > 8 else season + 1
+            yr = season - 1 if date.month <= 12 and date.month > 8 else season
             date = date.replace(year=yr)
             date_str = datetime.strftime(date, '%Y-%m-%d %H:%M:%S')
 
@@ -122,11 +114,15 @@ def main(season, filename):
 
 if __name__ == "__main__":
     parser = argparse.ArgumentParser()
-    parser.add_argument('-s', '--season', type=int, required=True,
+    parser.add_argument('-s', '--season', required=True, type=int,
                         help="the ending year of the season")
     parser.add_argument('-o', '--output', required=True,
                         type=lambda x: is_valid_parent_path(parser, x),
                         help="the full filepath of the output file")
+    parser.add_argument('-n', '--n-rounds', default=34,
+                        type=int,
+                        help="The number of regular season rounds "
+                             "in the season")
     args = parser.parse_args()
 
-    main(args.season, args.output)
+    main(args.season, args.n_rounds, args.output)
