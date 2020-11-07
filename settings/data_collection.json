@@ -1,0 +1,16 @@
+{
+  "n_rounds": 34,
+  "output_dir": "data/",
+  "game_stats": {
+    "url_link": "http://www.euroleague.net/main/results?gamenumber=%d&phasetypecode=RS&seasoncode=E%d",
+    "output_file_prefix": "euroleague_game_stats_"
+  },
+  "season_results": {
+    "url_link": "http://www.euroleague.net/main/results?gamenumber=%d&phasetypecode=RS&seasoncode=E%d",
+    "output_file_prefix": "euroleague_results_"
+  },
+  "season_standings": {
+    "url_link": "http://www.euroleague.net/main/standings?gamenumber=%d&phasetypecode=RS++++++++&seasoncode=E%d",
+    "output_file_prefix": "euroleague_standings_"
+  }
+}

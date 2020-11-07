@@ -1,0 +1,5 @@
+{
+  "feature_dir": "features",
+  "match_level_feature_file_prefix": "match_level_features",
+  "team_level_feature_file_prefix": "team_level_features"
+}

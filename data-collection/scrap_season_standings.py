@@ -8,27 +8,35 @@ import argparse
 from bs4 import BeautifulSoup
 import requests
 import re
+import os
 from tqdm import trange
 import pandas as pd
 import sys
 sys.path.append('auxiliary/')  # noqa: E402
-from argparser_types import is_valid_parent_path
+from io_json import read_json
 
 
-def main(season, n_rounds, filename):
+def main(season, n_rounds):
     '''
     Scraps the standings of the Euroleague games from the Euroleague's official
     site for the input season.
     Saves data to file.
     '''
+
+    # read settings
+    settings = read_json('settings/data_collection.json')
+    out_dir = settings['output_dir']
+    url_pattern = settings['season_standings']['url_link']
+    out_file_prefix = settings['season_standings']['output_file_prefix']
+    filename = '%s_%d_%d.csv' % (out_file_prefix, season - 1, season)
+    filepath = os.path.join(out_dir, filename)
+
     headers = ['Round', 'Position', 'Club Code', 'Club Name', 'Wins', 'Losses',
                'Offence', 'Defence', 'Points Diff']
     standings = []
     for game_round in trange(1, n_rounds + 1):
         # print('Processing round %d' % game_round)
-        url = ('http://www.euroleague.net/main/standings?gamenumber=%d&'
-               'phasetypecode=RS++++++++&seasoncode=E%d'
-               % (game_round, season - 1))
+        url = (url_pattern % (game_round, season - 1))
         try:
             r = requests.get(url)
         except ConnectionError:
@@ -61,7 +69,7 @@ def main(season, n_rounds, filename):
     print('Convert to dataframe')
     df = pd.DataFrame(standings, columns=headers)
     print('Save ot file')
-    df.to_csv(filename, index=False)
+    df.to_csv(filepath, index=False)
     return
 
 
@@ -69,13 +77,9 @@ if __name__ == "__main__":
     parser = argparse.ArgumentParser()
     parser.add_argument('-s', '--season', required=True, type=int,
                         help="the ending year of the season")
-    parser.add_argument('-o', '--output', required=True,
-                        type=lambda x: is_valid_parent_path(parser, x),
-                        help="the full filepath of the output file")
-    parser.add_argument('-n', '--n-rounds', default=34,
-                        type=int,
+    parser.add_argument('-n', '--n-rounds', default=34, type=int,
                         help="The number of regular season rounds "
                              "in the season")
     args = parser.parse_args()
 
-    main(args.season, args.n_rounds, args.output)
+    main(args.season, args.n_rounds)
