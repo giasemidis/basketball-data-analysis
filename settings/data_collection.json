@@ -3,14 +3,14 @@
   "output_dir": "data/",
   "game_stats": {
     "url_link": "http://www.euroleague.net/main/results?gamenumber=%d&phasetypecode=RS&seasoncode=E%d",
-    "output_file_prefix": "euroleague_game_stats_"
+    "output_file_prefix": "euroleague_game_stats"
   },
   "season_results": {
     "url_link": "http://www.euroleague.net/main/results?gamenumber=%d&phasetypecode=RS&seasoncode=E%d",
-    "output_file_prefix": "euroleague_results_"
+    "output_file_prefix": "euroleague_results"
   },
   "season_standings": {
     "url_link": "http://www.euroleague.net/main/standings?gamenumber=%d&phasetypecode=RS++++++++&seasoncode=E%d",
-    "output_file_prefix": "euroleague_standings_"
+    "output_file_prefix": "euroleague_standings"
   }
 }

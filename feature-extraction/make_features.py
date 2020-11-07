@@ -238,7 +238,7 @@ def make_game_features_v0(df, standings=None):
     return df
 
 
-def make_team_features(data, standings, f4Teams=[], year=None):
+def make_team_features(data, standings, f4Teams=[]):
     game_feats = make_game_features(data, standings, f4Teams)
 
     if 'Label' not in game_feats.keys():
