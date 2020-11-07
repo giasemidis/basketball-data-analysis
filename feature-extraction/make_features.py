@@ -6,6 +6,7 @@ Created on Sun Sep 23 17:13:33 2018
 """
 import numpy as np
 import pandas as pd
+import logging
 from make_standings import make_standings
 
 
@@ -48,6 +49,9 @@ def make_game_features(data, standings, f4teams=[]):
         form of home team (wins over the last 5 games)
         form of away team (wins over the last 5 games)
     '''
+    logger = logging.getLogger(__name__)
+    logger.info('make match-level features')
+
     stands = standings.copy()
     stands['Round'] += 1
     data['Home F4'] = np.where(data['Home Team'].isin(f4teams), 1, 0)
@@ -239,6 +243,8 @@ def make_game_features_v0(df, standings=None):
 
 
 def make_team_features(data, standings, f4Teams=[]):
+    logger = logging.getLogger(__name__)
+    logger.info('make team-level features')
     game_feats = make_game_features(data, standings, f4Teams)
 
     if 'Label' not in game_feats.keys():

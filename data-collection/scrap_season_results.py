@@ -6,9 +6,12 @@ import re
 import os
 import pandas as pd
 import sys
+import logging
 from datetime import datetime
 sys.path.append('auxiliary/')  # noqa: E402
 from io_json import read_json
+
+logging.basicConfig(level=logging.INFO)
 
 
 def main(season, n_rounds):
@@ -32,7 +35,7 @@ def main(season, n_rounds):
     regex = re.compile(r'score [a-z\s]*pts[a-z\s]*')
     season_str = '%d-%d' % (season - 1, season)
     for game_round in trange(1, n_rounds + 1):
-        # print('Processing round %d' % game_round)
+
         url = (url_pattern % (game_round, season - 1))
         try:
             r = requests.get(url)
@@ -65,9 +68,10 @@ def main(season, n_rounds):
                             home_team, away_team,
                             home_score, away_score])
 
-    print('Convert to dataframe')
+    logging.info('Convert to dataframe')
     df = pd.DataFrame(results, columns=headers)
-    print('Save to file')
+
+    logging.info('Save to file')
     df.to_csv(filepath, index=False)
 
     return

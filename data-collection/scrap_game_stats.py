@@ -4,11 +4,14 @@ from bs4 import BeautifulSoup
 import requests
 import sys
 import os
+import logging
 from datetime import datetime
 import re
 import pandas as pd
 sys.path.append('auxiliary/')  # noqa: E402
 from io_json import read_json
+
+logging.basicConfig(level=logging.INFO)
 
 
 def main(season, n_rounds):
@@ -90,7 +93,8 @@ def main(season, n_rounds):
                     # away team stats
                     dics = away.copy()
                 else:
-                    print('Totals field returned invalid number of teams')
+                    err_msg = 'Totals field returned invalid number of teams'
+                    raise ValueError(err_msg)
                 stats = t.find_all('span')
                 for stat in stats:
                     # ignore total time played field
@@ -113,13 +117,15 @@ def main(season, n_rounds):
                             if field + '-Attempted' not in header:
                                 header.append(field + '-Attempted')
                         else:
-                            print('Invalid field value')
+                            raise ValueError('Invalid field value')
                 allteamstats.append(dics)
 
-    print('Convert to dataframe')
+    logging.info('Convert to dataframe')
     df = pd.DataFrame(allteamstats, columns=header)
-    print('Save to file')
+
+    logging.info('Save to file')
     df.to_csv(filepath, index=False)
+
     return df
 
 

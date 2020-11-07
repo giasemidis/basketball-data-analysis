@@ -12,8 +12,11 @@ import os
 from tqdm import trange
 import pandas as pd
 import sys
+import logging
 sys.path.append('auxiliary/')  # noqa: E402
 from io_json import read_json
+
+logging.basicConfig(level=logging.INFO)
 
 
 def main(season, n_rounds):
@@ -35,7 +38,7 @@ def main(season, n_rounds):
                'Offence', 'Defence', 'Points Diff']
     standings = []
     for game_round in trange(1, n_rounds + 1):
-        # print('Processing round %d' % game_round)
+
         url = (url_pattern % (game_round, season - 1))
         try:
             r = requests.get(url)
@@ -66,9 +69,10 @@ def main(season, n_rounds):
             standings.append([game_round, pos, cc, team, wins, losses,
                               points_plus, points_minus, points_diff])
 
-    print('Convert to dataframe')
+    logging.info('Convert to dataframe')
     df = pd.DataFrame(standings, columns=headers)
-    print('Save ot file')
+
+    logging.info('Save ot file')
     df.to_csv(filepath, index=False)
     return
 

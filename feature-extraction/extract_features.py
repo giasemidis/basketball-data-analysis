@@ -3,11 +3,14 @@ import pandas as pd
 import argparse
 import sys
 import os
+import logging
 from make_features import make_game_features
 from make_features import make_team_features
 sys.path.append('auxiliary')  # noqa: E402
 from io_json import read_json
 from argparser_types import is_valid_parent_path
+
+logging.basicConfig(level=logging.INFO)
 
 
 def main(season, results_file, standings_file, f4_file):
@@ -39,11 +42,13 @@ def main(season, results_file, standings_file, f4_file):
 
     feats.insert(3, 'Label', label)
     # save features to file.
+    logging.info('save match-level features')
     feats.to_csv(match_level_file, index=False)
 
     # make team features
     team_feats = make_team_features(data, standings, f4Teams)
     # save features to file
+    logging.info('save team-level features')
     team_feats.to_csv(team_level_file, index=False)
     return
 
