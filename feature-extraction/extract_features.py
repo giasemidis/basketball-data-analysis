@@ -2,7 +2,6 @@ import os
 import sys
 import argparse
 import logging
-import numpy as np
 import pandas as pd
 from make_features import make_game_features
 from make_features import make_team_features
@@ -35,12 +34,9 @@ def main(season, results_file, standings_file, f4_file):
     # Specify the F4 teams of the *previous* year
     f4Teams = f4teams[str(season - 1)]
 
-    label = np.where(data['Home Score'] > data['Away Score'], 1, 2)
-
     # make game features
     feats = make_game_features(data, standings, f4Teams)
 
-    feats.insert(3, 'Label', label)
     # save features to file.
     logging.info('save match-level features')
     feats.to_csv(match_level_file, index=False)

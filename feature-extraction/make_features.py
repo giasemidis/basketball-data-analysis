@@ -50,6 +50,7 @@ def make_game_features(data, standings, f4teams=[]):
     stands['Round'] += 1
     data['Home F4'] = np.where(data['Home Team'].isin(f4teams), 1, 0)
     data['Away F4'] = np.where(data['Away Team'].isin(f4teams), 1, 0)
+    data['Label'] = np.where(data['Home Score'] > data['Away Score'], 1, 2)
     new_df = data.merge(stands, how='left',
                         left_on=['Round', 'Home Team'],
                         right_on=['Round', 'Club Name'])
@@ -116,7 +117,7 @@ def make_game_features(data, standings, f4teams=[]):
     new_df['form_x'] = forms_home
     new_df['form_y'] = forms_away
 
-    new_df = new_df[['Round', 'Home Team', 'Away Team',
+    new_df = new_df[['Season', 'Round', 'Home Team', 'Away Team', 'Label',
                      'Position_x', 'Position_y',
                      'Offence_x', 'Offence_y',
                      'Defence_x', 'Defence_y',
@@ -241,14 +242,14 @@ def make_team_features(data, standings, f4Teams=[]):
     logger.info('make team-level features')
     game_feats = make_game_features(data, standings, f4Teams)
 
-    if 'Label' not in game_feats.keys():
-        label = np.where(data['Home Score'] > data['Away Score'], 1, 2)
-        game_feats.insert(3, 'Label', label)
+    cols = ['Season', 'Round', 'Game ID', 'Team', 'Label', 'Home', 'Away',
+            'Position', 'Offence', 'Defence', 'form', 'F4', 'Diff']
 
     game_feats['Game ID'] = data['GameID']
 
-    home = game_feats[['Round', 'Game ID', 'Home Team', 'Position_x',
-                       'Offence_x', 'Defence_x', 'form_x', 'Home F4']]
+    home = game_feats[['Season', 'Round', 'Game ID', 'Home Team',
+                       'Position_x', 'Offence_x', 'Defence_x', 'form_x',
+                       'Home F4']]
     home = home.rename(index=str, columns={'Home Team': 'Team',
                                            'Position_x': 'Position',
                                            'Offence_x': 'Offence',
@@ -256,12 +257,15 @@ def make_team_features(data, standings, f4Teams=[]):
                                            'form_x': 'form',
                                            'Home F4': 'F4'})
     home['Diff'] = home['Offence'] - home['Defence']
-    home.insert(3, 'Label', np.where(game_feats['Label'].values == 1, 1, 0))
-    home.insert(4, 'Home', 1)
-    home.insert(5, 'Away', 0)
+    home['Label'] = np.where(game_feats['Label'].values == 1, 1, 0)
+    home['Home'] = 1
+    home['Away'] = 0
+    # rearrange feature columns
+    home = home[cols]
 
-    away = game_feats[['Round', 'Game ID', 'Away Team', 'Position_y',
-                       'Offence_y', 'Defence_y', 'form_y', 'Away F4']]
+    away = game_feats[['Season', 'Round', 'Game ID', 'Away Team',
+                       'Position_y', 'Offence_y', 'Defence_y', 'form_y',
+                       'Away F4']]
     away = away.rename(index=str, columns={'Away Team': 'Team',
                                            'Position_y': 'Position',
                                            'Offence_y': 'Offence',
@@ -269,9 +273,11 @@ def make_team_features(data, standings, f4Teams=[]):
                                            'form_y': 'form',
                                            'Away F4': 'F4'})
     away['Diff'] = away['Offence'] - away['Defence']
-    away.insert(3, 'Label', np.where(game_feats['Label'].values == 2, 1, 0))
-    away.insert(4, 'Home', 0)
-    away.insert(5, 'Away', 1)
+    away['Label'] = np.where(game_feats['Label'].values == 2, 1, 0)
+    away['Home'] = 0
+    away['Away'] = 1
+    # rearrange feature columns
+    away = away[cols]
 
     team_feats = pd.concat([home, away])
     team_feats.sort_values(by=['Round', 'Team'], inplace=True)
