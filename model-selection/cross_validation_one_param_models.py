@@ -1,7 +1,7 @@
 '''
 Hyper-parameter tuning using k-fold cross-validation for one hyper-parameter
 models via loops grid search. This scripts is left for legacy, see
-also the `gridsearch_validation.py` which covers multiple hyper-parameter
+also the `gridsearch_cross_validation.py` which covers multiple hyper-parameter
 models.
 '''
 import sys
