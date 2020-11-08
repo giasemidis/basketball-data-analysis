@@ -25,7 +25,7 @@ from kfold_crosseval import kfold_crosseval
 
 
 # %% Choose settings and classifier
-test_season = 2019  # hold-out season for validation
+test_season = '2018-2019'  # hold-out season for validation
 level = 'match'  # match or team level features to use
 shuffle = True  # whether to shuffle or not the data in k-fold cross validation
 norm = True  # whether to normalise or not the features
@@ -53,7 +53,7 @@ elif level == 'team':
 n_feats = len(feats)
 
 # seasons for calibration
-df = df[df['Season'] < test_season]
+df = df[df['Season'] != test_season]
 
 # %% Re-shape data
 X_train, y_train, df, groups = shape_data(df, feats, norm=norm,

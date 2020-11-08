@@ -22,7 +22,7 @@ from data_processing import load_features, shape_data
 
 
 # %% Choose settings and classifier
-test_season = 2019  # hold-out season for validation
+test_season = '2018-2019'  # hold-out season for validation
 level = 'match'  # match or team level features to use
 shuffle = True  # whether to shuffle or not the data in k-fold cross validation
 norm = True  # whether to normalise or not the features
@@ -54,7 +54,7 @@ elif level == 'team':
              'form', 'F4', 'Diff']
 
 # seasons for calibration
-df = df[df['Season'] < test_season]
+df = df[df['Season'] != test_season]
 
 # %% Re-shape data
 X_train, y_train, df, groups = shape_data(df, feats, norm=norm,
@@ -67,7 +67,7 @@ if level == 'team':
     folditer = kfold.split(X_train, y_train, groups)
 else:
     kfold = StratifiedKFold(n_splits=nsplits, shuffle=shuffle,
-                            standom_state=random_state)
+                            random_state=random_state)
     folditer = kfold.split(X_train, y_train)
 
 # %% Set parameters
@@ -79,36 +79,36 @@ elif method == 'svm-linear':
     params = {'C': np.sort(np.concatenate(
         (np.logspace(-5, 8, 14), 5 * np.logspace(-5, 8, 14)), axis=0))}
     model = SVC(kernel='linear', class_weight='balanced',
-                standom_state=random_state, max_iter=1000)
+                random_state=random_state, max_iter=1000)
 elif method == 'svm-rbf':
     params = {'C': np.sort(np.concatenate((np.logspace(-5, 6, 12),
                            5 * np.logspace(-5, 6, 12)), axis=0)),
               'gamma': np.sort(np.concatenate((np.logspace(-5, 6, 12),
                                5 * np.logspace(-5, 6, 12)), axis=0))}
     model = SVC(kernel='rbf', class_weight='balanced',
-                standom_state=random_state, max_iter=1000)
+                random_state=random_state, max_iter=1000)
 elif method == 'decision-tree':
     params = {}
     model = DecisionTreeClassifier(class_weight='balanced',
-                                   standom_state=random_state)
+                                   random_state=random_state)
 elif method == 'random-forest':
     params = {'n_estimators': np.arange(10, 100, 5)}
     model = RandomForestClassifier(class_weight='balanced',
-                                   standom_state=random_state)
+                                   random_state=random_state)
 elif method == 'naive-bayes':
     params = {}
     model = GaussianNB()
 elif method == 'gradient-boosting':
     params = {'n_estimators': np.arange(10, 200, 10)}
-    model = GradientBoostingClassifier(standom_state=random_state)
+    model = GradientBoostingClassifier(random_state=random_state)
 elif method == 'ada':
     params = {'n_estimators': np.arange(5, 200, 1)}
-    model = AdaBoostClassifier(standom_state=random_state, learning_rate=1.)
+    model = AdaBoostClassifier(random_state=random_state, learning_rate=1.)
 elif method == 'ada2':
     params = {'n_estimators': np.arange(5, 200, 1),
               'learning_rate': np.concatenate(([0.01, 0.05],
                                                np.arange(0.1, 2.1, 0.1)))}
-    model = AdaBoostClassifier(standom_state=random_state)
+    model = AdaBoostClassifier(random_state=random_state)
 elif method == 'ada3':
     params = {'n_estimators': np.arange(5, 200, 2),
               'learning_rate': np.arange(0.2, 2.1, 0.2),
