@@ -1,13 +1,7 @@
-# -*- coding: utf-8 -*-
-"""
-Created on Sat Apr  7 22:30:59 2018
-
-@author: Georgios
-"""
-import numpy as np
-import pandas as pd
 import sys
 from itertools import permutations
+import numpy as np
+import pandas as pd
 
 
 def make_standings(results, nround):

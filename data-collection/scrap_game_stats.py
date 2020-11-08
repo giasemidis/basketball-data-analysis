@@ -1,12 +1,12 @@
+import os
+import sys
 import argparse
+import logging
+import re
+from datetime import datetime
 from tqdm import trange
 from bs4 import BeautifulSoup
 import requests
-import sys
-import os
-import logging
-from datetime import datetime
-import re
 import pandas as pd
 sys.path.append('auxiliary/')  # noqa: E402
 from io_json import read_json

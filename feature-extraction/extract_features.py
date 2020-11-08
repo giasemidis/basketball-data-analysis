@@ -1,9 +1,9 @@
+import os
+import sys
+import argparse
+import logging
 import numpy as np
 import pandas as pd
-import argparse
-import sys
-import os
-import logging
 from make_features import make_game_features
 from make_features import make_team_features
 sys.path.append('auxiliary')  # noqa: E402

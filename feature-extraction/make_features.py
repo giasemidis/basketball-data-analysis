@@ -1,12 +1,6 @@
-# -*- coding: utf-8 -*-
-"""
-Created on Sun Sep 23 17:13:33 2018
-
-@author: Georgios
-"""
+import logging
 import numpy as np
 import pandas as pd
-import logging
 from make_standings import make_standings
 
 

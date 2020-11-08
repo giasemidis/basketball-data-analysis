@@ -1,18 +1,12 @@
-# -*- coding: utf-8 -*-
-"""
-Created on Thu Oct  4 19:52:26 2018
-
-@author: Georgios
-"""
+import os
+import sys
 import argparse
+import logging
+import re
 from bs4 import BeautifulSoup
 import requests
-import re
-import os
 from tqdm import trange
 import pandas as pd
-import sys
-import logging
 sys.path.append('auxiliary/')  # noqa: E402
 from io_json import read_json
 
