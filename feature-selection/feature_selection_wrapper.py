@@ -1,13 +1,17 @@
-# -*- coding: utf-8 -*-
-"""
-Created on Sat Feb  2 19:25:38 2019
+'''
+Wrapper method for feature selection, i.e. subsets of features are
+generated and evaluated using a chosen algorithm and its hyper-parameters.
 
-@author: Georgios
-"""
-import numpy as np
+Here, as the number of features is relative small, we are able to generate
+all possible combinations of features. If the number of features grows large,
+a different approach should be adopted, the Sequential Forward Selection, see
+`feature_selection_wrapper_sfs.py` script.
+'''
 import sys
-from tqdm import tqdm
 from itertools import combinations
+import numpy as np
+from matplotlib import pyplot as plt
+from tqdm import tqdm
 # from sklearn.linear_model import LogisticRegression
 # from sklearn.ensemble import RandomForestClassifier
 # from sklearn.tree import DecisionTreeClassifier
@@ -15,40 +19,41 @@ from itertools import combinations
 # from sklearn.ensemble import GradientBoostingClassifier
 from sklearn.ensemble import AdaBoostClassifier
 # from sklearn.naive_bayes import GaussianNB
-from matplotlib import pyplot as plt
-sys.path.append('auxiliary/')
-from data_processing import load_data, shape_data
+sys.path.append('auxiliary/')  # noqa: E402
+from data_processing import load_features, shape_data
 from kfold_crosseval import kfold_crosseval
 
-level = 'match'
-shuffle = True
-norm = True
-min_round = 5
-nsplits = 5
-# model = GaussianNB()
-model = AdaBoostClassifier(n_estimators=121, random_state=10,
-                           learning_rate=1.0)
 
-# %% load data
-df = load_data(level)
+# %% Choose settings and classifier
+test_season = 2019  # hold-out season for validation
+level = 'match'  # match or team level features to use
+shuffle = True  # whether to shuffle or not the data in k-fold cross validation
+norm = True  # whether to normalise or not the features
+min_round = 5  # minimum number of first rounds to skip in every season
+nsplits = 5  # number of folds in k-fold cross validation
+nestimators = 188  # this is a classifier-specific setting
+rate = 1.2  # this is a classifier-specific setting
+random_state = 10  # random state for the classifier
+model = AdaBoostClassifier(n_estimators=nestimators, random_state=random_state,
+                           learning_rate=rate)
 
-# choose features
+# %% load feature data
+df = load_features(level)
+
+# %% choose features
 if level == 'match':
-    # 'Round', 'Season', 'Home Team', 'Away Team', 'Label',
     feats = ['Position_x', 'Position_y', 'Offence_x', 'Offence_y',
              'Defence_x', 'Defence_y',
              'form_x', 'form_y',
              'Diff_x', 'Diff_y',
              'Home F4', 'Away F4']
 elif level == 'team':
-    # 'Round', 'Season', 'Game ID', 'Team', 'Label',
     feats = ['Home', 'Away', 'Position', 'Offence', 'Defence',
-             'form',
-             'F4', 'Diff']
+             'form', 'F4', 'Diff']
 n_feats = len(feats)
 
 # seasons for calibration
-df = df[df['Season'] < 2019]
+df = df[df['Season'] < test_season]
 
 # %% Re-shape data
 X_train, y_train, df, groups = shape_data(df, feats, norm=norm,
@@ -75,13 +80,16 @@ for ii, comb in enumerate(tqdm(allcombs)):
 
     X_train = df[comb].values
 
-    scores[ii, 0], scores[ii, 1] = kfold_crosseval(X_train, y_train, df,
+    scores[ii, 0], scores[ii, 1] = kfold_crosseval(X_train, y_train, df[comb],
                                                    nsplits, groups=groups,
                                                    model=model,
                                                    level=level,
                                                    shuffle=shuffle)
+# save results
+np.savez('output/wrapper_ada2_n_{}_rate_{}'.format(nestimators, rate),
+         scores=scores, features=np.array(allcombs))
 
-np.savez('output/wrapper', scores=scores, features=np.array(allcombs))
+# %% Plot results
 # Sort best combinations
 ll = np.argsort(scores[:, 0])[::-1]
 sortcombs = [allcombs[u] for u in ll]

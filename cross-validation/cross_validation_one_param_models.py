@@ -1,12 +1,11 @@
-# -*- coding: utf-8 -*-
-"""
-Created on Sun Sep 23 23:32:58 2018
-
-@author: Georgios
-"""
-
-import numpy as np
+'''
+Hyper-parameter tuning using k-fold cross-validation for one hyper-parameter
+models via loops grid search. This scripts is left for legacy, see
+also the `gridsearch_validation.py` which covers multiple hyper-parameter
+models.
+'''
 import sys
+import numpy as np
 from matplotlib import pyplot as plt
 from sklearn.linear_model import LogisticRegression
 from sklearn.ensemble import RandomForestClassifier
@@ -16,40 +15,40 @@ from sklearn.naive_bayes import GaussianNB
 from sklearn.ensemble import GradientBoostingClassifier, AdaBoostClassifier
 from sklearn.neighbors import KNeighborsClassifier
 from sklearn.discriminant_analysis import QuadraticDiscriminantAnalysis
-sys.path.append('auxiliary/')
-from data_processing import load_data, shape_data
+sys.path.append('auxiliary/')  # noqa: E402
+from data_processing import load_features, shape_data
 from kfold_crosseval import kfold_crosseval
 
-# settings
+
+# %% Choose settings and classifier
+test_season = 2019  # hold-out season for validation
+level = 'team'  # match or team level features to use
+shuffle = True  # whether to shuffle or not the data in k-fold cross validation
+norm = True  # whether to normalise or not the features
+min_round = 5  # minimum number of first rounds to skip in every season
+nsplits = 5  # number of folds in k-fold cross validation
+method = 'log-reg'  # method for grid search hyper-parameter training, see list
 # methods: 'log-reg', 'svm-linear', 'svm-rbf', 'decision-tree', 'random-forest',
 # 'naive-bayes', 'gradient-boosting', 'ada', 'ada2', 'knn',
 # 'discriminant-analysis'
-level = 'team'
-norm = True
-shuffle = True
-method = 'log-reg'
-min_round = 5
-nsplits = 5
 
 print('level: %s - norm: %r - shuffle: %r - method: %s' %
       (level, norm, shuffle, method))
 
-# %% load data
-df = load_data(level)
+# %% load feature data
+df = load_features(level)
 
 # choose features
 if level == 'match':
-    # 'Round', 'Season', 'Home Team', 'Away Team', 'Label',
     feats = ['Position_x', 'Position_y', 'Offence_x', 'Offence_y',
              'Defence_x', 'Defence_y', 'form_x', 'form_y', 'Diff_x', 'Diff_y',
              'Home F4', 'Away F4']
 elif level == 'team':
-    # 'Round', 'Season', 'Game ID', 'Team', 'Label',
     feats = ['Home', 'Away', 'Position',
              'Offence', 'Defence', 'form', 'F4', 'Diff']
 
 # seasons for calibration
-df = df[df['Season'] < 2019]
+df = df[df['Season'] < test_season]
 
 # %% Re-shape data
 X_train, y_train, df, groups = shape_data(df, feats, norm=norm,

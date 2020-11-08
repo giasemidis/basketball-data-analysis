@@ -1,12 +1,11 @@
-# -*- coding: utf-8 -*-
-"""
-Created on Sun Sep 23 23:32:58 2018
-
-@author: Georgios
-"""
-
-import numpy as np
+'''
+Hyper-parameter tuning using k-fold cross-validation for any-number of
+parameters using sklearn grid-search. This script covers both the
+`cross_validation_one_param_models.py` and
+`cross_validation_two_param_models.py` scripts.
+'''
 import sys
+import numpy as np
 from matplotlib import pyplot as plt
 from sklearn.model_selection import StratifiedKFold, GroupKFold
 from sklearn.linear_model import LogisticRegression
@@ -18,40 +17,44 @@ from sklearn.ensemble import GradientBoostingClassifier, AdaBoostClassifier
 from sklearn.neighbors import KNeighborsClassifier
 from sklearn.discriminant_analysis import QuadraticDiscriminantAnalysis
 from sklearn.model_selection import GridSearchCV
-sys.path.append('auxiliary/')
-from data_processing import load_data, shape_data
+sys.path.append('auxiliary/')  # noqa: E402
+from data_processing import load_features, shape_data
 
 
-# settings
+# %% Choose settings and classifier
+test_season = 2019  # hold-out season for validation
+level = 'match'  # match or team level features to use
+shuffle = True  # whether to shuffle or not the data in k-fold cross validation
+norm = True  # whether to normalise or not the features
+min_round = 5  # minimum number of first rounds to skip in every season
+nsplits = 5  # number of folds in k-fold cross validation
+method = 'ada2'  # method for grid search hyper-parameter training, see list
 # methods: 'log-reg', 'svm-linear', 'svm-rbf', 'decision-tree', 'random-forest',
 # 'naive-bayes', 'gradient-boosting', 'ada', 'ada2', 'knn',
 # 'discriminant-analysis'
-level = 'match'
-norm = True
-shuffle = True
-method = 'ada2'
-min_round = 5
-nsplits = 5
+random_state = 10
 
 print('level: %s - norm: %r - shuffle: %r - method: %s' %
       (level, norm, shuffle, method))
 
-# %% load data
-df = load_data(level)
+# %% load feature data
+df = load_features(level)
 
 # choose features
 if level == 'match':
-    # 'Round', 'Season', 'Home Team', 'Away Team', 'Label',
+    # feats = ['Position_x', 'Position_y', 'Offence_x', 'Offence_y',
+    #          'Defence_x', 'Defence_y', 'form_x', 'form_y', 'Diff_x', 'Diff_y',
+    #          'Home F4', 'Away F4']
+    # feats = ['Position_x', 'Offence_x', 'Offence_y', 'Defence_y',
+    #          'Diff_y', 'Home F4', 'Away F4']
     feats = ['Position_x', 'Position_y', 'Offence_x', 'Offence_y',
-             'Defence_x', 'Defence_y', 'form_x', 'form_y', 'Diff_x', 'Diff_y',
-             'Home F4', 'Away F4']
+             'Defence_y', 'Diff_y', 'Away F4']
 elif level == 'team':
-    # 'Round', 'Season', 'Game ID', 'Team', 'Label',
     feats = ['Home', 'Away', 'Position', 'Offence', 'Defence',
              'form', 'F4', 'Diff']
 
 # seasons for calibration
-df = df[df['Season'] < 2019]
+df = df[df['Season'] < test_season]
 
 # %% Re-shape data
 X_train, y_train, df, groups = shape_data(df, feats, norm=norm,
@@ -63,7 +66,8 @@ if level == 'team':
     kfold = GroupKFold(n_splits=nsplits)
     folditer = kfold.split(X_train, y_train, groups)
 else:
-    kfold = StratifiedKFold(n_splits=nsplits, shuffle=shuffle, random_state=10)
+    kfold = StratifiedKFold(n_splits=nsplits, shuffle=shuffle,
+                            standom_state=random_state)
     folditer = kfold.split(X_train, y_train)
 
 # %% Set parameters
@@ -74,35 +78,37 @@ if method == 'log-reg':
 elif method == 'svm-linear':
     params = {'C': np.sort(np.concatenate(
         (np.logspace(-5, 8, 14), 5 * np.logspace(-5, 8, 14)), axis=0))}
-    model = SVC(kernel='linear', class_weight='balanced', random_state=10,
-                max_iter=1000)
+    model = SVC(kernel='linear', class_weight='balanced',
+                standom_state=random_state, max_iter=1000)
 elif method == 'svm-rbf':
     params = {'C': np.sort(np.concatenate((np.logspace(-5, 6, 12),
                            5 * np.logspace(-5, 6, 12)), axis=0)),
               'gamma': np.sort(np.concatenate((np.logspace(-5, 6, 12),
                                5 * np.logspace(-5, 6, 12)), axis=0))}
-    model = SVC(kernel='rbf', class_weight='balanced', random_state=10,
-                max_iter=1000)
+    model = SVC(kernel='rbf', class_weight='balanced',
+                standom_state=random_state, max_iter=1000)
 elif method == 'decision-tree':
     params = {}
-    model = DecisionTreeClassifier(class_weight='balanced', random_state=10)
+    model = DecisionTreeClassifier(class_weight='balanced',
+                                   standom_state=random_state)
 elif method == 'random-forest':
     params = {'n_estimators': np.arange(10, 100, 5)}
-    model = RandomForestClassifier(class_weight='balanced', random_state=10)
+    model = RandomForestClassifier(class_weight='balanced',
+                                   standom_state=random_state)
 elif method == 'naive-bayes':
     params = {}
     model = GaussianNB()
 elif method == 'gradient-boosting':
     params = {'n_estimators': np.arange(10, 200, 10)}
-    model = GradientBoostingClassifier(random_state=10)
+    model = GradientBoostingClassifier(standom_state=random_state)
 elif method == 'ada':
     params = {'n_estimators': np.arange(5, 200, 1)}
-    model = AdaBoostClassifier(random_state=10, learning_rate=1)
+    model = AdaBoostClassifier(standom_state=random_state, learning_rate=1.)
 elif method == 'ada2':
     params = {'n_estimators': np.arange(5, 200, 1),
               'learning_rate': np.concatenate(([0.01, 0.05],
                                                np.arange(0.1, 2.1, 0.1)))}
-    model = AdaBoostClassifier(random_state=10)
+    model = AdaBoostClassifier(standom_state=random_state)
 elif method == 'ada3':
     params = {'n_estimators': np.arange(5, 200, 2),
               'learning_rate': np.arange(0.2, 2.1, 0.2),
@@ -113,7 +119,7 @@ elif method == 'ada3':
                                  DecisionTreeClassifier(max_depth=20),
                                  DecisionTreeClassifier(max_depth=25),
                                  DecisionTreeClassifier(max_depth=30)]}
-    model = AdaBoostClassifier(random_state=10)
+    model = AdaBoostClassifier(random_state=random_state)
 elif method == 'knn':
     params = {'n_neighbors': np.arange(3, 50, 2)}
     model = KNeighborsClassifier()
@@ -173,7 +179,7 @@ elif len(params.keys()) == 2:
              clf.param_grid[tmp[1]].shape[0])
     accuracy = accuracy.reshape(shape)
     w_accuracy = w_accuracy.reshape(shape)
-    np.savez('output/%s' % method, accuracy=accuracy,
+    np.savez('output/%s_feat_comb_index_2543' % method, accuracy=accuracy,
              w_accuracy=w_accuracy,
              params1=clf.param_grid[tmp[0]], params2=clf.param_grid[tmp[1]])
 
