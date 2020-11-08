@@ -1,10 +1,3 @@
-# -*- coding: utf-8 -*-
-"""
-Created on Sat Oct  6 16:57:48 2018
-
-@author: Georgios
-"""
-
 import json
 from deco_path_valid import valid_file
 from deco_path_valid import valid_folder

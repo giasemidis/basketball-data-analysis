@@ -1,9 +1,3 @@
-# -*- coding: utf-8 -*-
-"""
-Created on Sat Feb  2 22:51:12 2019
-
-@author: Georgios
-"""
 import numpy as np
 from sklearn.model_selection import StratifiedKFold, GroupKFold
 from sklearn.naive_bayes import GaussianNB
@@ -12,6 +6,9 @@ from sklearn.metrics import accuracy_score, balanced_accuracy_score
 
 def kfold_crosseval(X_train, y_train, df_train, nsplits, groups=None,
                     model=GaussianNB(), level='match', shuffle=True):
+    '''
+    Perform k-fold cross validation using the input `model`
+    '''
     if level == 'team':
         kfold = GroupKFold(n_splits=nsplits)
         folditer = kfold.split(X_train, y_train, groups)

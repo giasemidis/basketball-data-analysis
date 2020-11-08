@@ -1,16 +1,10 @@
-# -*- coding: utf-8 -*-
-"""
-Created on Sun Apr  1 23:08:36 2018
-
-@author: Georgios
-"""
-
 import os.path
 import sys
 
 
 def valid_file(func):
-    """Checks the validity of the input file of read-data fuction. If files
+    """
+    Checks the validity of the input file of read-data fuction. If files
     does not exist, it exists.
     """
 
@@ -25,7 +19,8 @@ def valid_file(func):
 
 
 def valid_folder(func):
-    """Checks the validity of the output directory of a write-data function. If
+    """
+    Checks the validity of the output directory of a write-data function. If
     directory does not exist, it exists.
     """
 

@@ -1,16 +1,77 @@
-# -*- coding: utf-8 -*-
-"""
-Created on Sun Feb  3 16:34:10 2019
-
-@author: Georgios
-"""
-import numpy as np
+import os
 import sys
+from glob import glob
+import numpy as np
 import pandas as pd
-from normalise import normalise
+from sklearn.preprocessing import MinMaxScaler
+sys.path.append('auxiliary/')  # noqa: E402
+from io_json import read_json
+
+
+def normalise(X):
+    '''
+    Normalise the features of the input design matrix `X` across the x=0 axis.
+    '''
+    x_norm = (X - X.min(axis=0)) / (X.max(axis=0) - X.min(axis=0))
+    return x_norm
+
+
+def shape_data_scaler(df, feats, norm=True, min_round=5):
+    '''
+    Shape input data in `df` by selecting the `feats`, excluding rounds and
+    normalising if `norm=True`.
+
+    Returns four variables:
+    * X_train
+    * y_train
+    * df (the new df)
+    * groups (for defining groups of matches)
+    * scaler (the scaler object from normalistion)
+    '''
+    # ignore early games in the season, as they do not contain the 'form'
+    # feature.
+    ii = df['Round'] > min_round
+
+    # filter out the games ignored
+    df = df[ii]
+    df.reset_index(drop=True, inplace=True)
+
+    # make the Design table
+    X_train = df[feats].values
+
+    # normalise the Design table if required
+    if isinstance(norm, bool) and norm:
+        scaler = MinMaxScaler()
+        X_train = scaler.fit_transform(X_train)
+        # X_train = normalise(X_train)
+    elif isinstance(norm, MinMaxScaler):
+        X_train = norm.transform(X_train)
+        scaler = norm
+
+    # extract the tags
+    y_train = df['Label'].values
+
+    # if labels are 1 and 2, set them to 0-1
+    if 2 in np.unique(y_train):
+        y_train = y_train - 1
+
+    # define the groups matches if processing 'team' level classification
+    groups = df['Game ID'].values if 'Game ID' in df.keys() else None
+
+    return X_train, y_train, df, groups, scaler
 
 
 def shape_data(df, feats, norm=True, min_round=5):
+    '''
+    Shape input data in `df` by selecting the `feats`, excluding rounds and
+    normalising if `norm=True`.
+
+    Returns four variables:
+    * X_train
+    * y_train
+    * df (the new df)
+    * groups (for defining groups of matches)
+    '''
 
     # ignore early games in the season, as they do not contain the 'form'
     # feature.
@@ -40,25 +101,23 @@ def shape_data(df, feats, norm=True, min_round=5):
     return X_train, y_train, df, groups
 
 
-def load_data(level):
+def load_features(level):
     '''load features'''
-    if level == 'match':
-        df1 = pd.read_csv('features/match_level_features_2016_2017.csv')
-        df2 = pd.read_csv('features/match_level_features_2017_2018.csv')
-        df3 = pd.read_csv('features/match_level_features_2018_2019.csv')
-    elif level == 'team':
-        df1 = pd.read_csv('features/team_level_features_2016_2017.csv')
-        df2 = pd.read_csv('features/team_level_features_2017_2018.csv')
-        df3 = pd.read_csv('features/team_level_features_2018_2019.csv')
-    else:
-        sys.exit('Invalid level of analysis')
 
-    df = pd.concat([df1, df2, df3], ignore_index=False)
-    seasoncol = np.concatenate(((2017 * np.ones(df1.shape[0], dtype=int)),
-                                (2018 * np.ones(df2.shape[0], dtype=int)),
-                                (2019 * np.ones(df3.shape[0], dtype=int))),
-                               axis=0)
-    if 'Season' not in df.keys():
-        df.insert(1, 'Season', seasoncol)
+    settings = read_json('settings/feature_extraction.json')
+    feature_dir = settings['feature_dir']
+
+    if level == 'match':
+        file_pattern = settings['match_level_feature_file_prefix']
+    elif level == 'team':
+        file_pattern = settings['team_level_feature_file_prefix']
+    else:
+        raise ValueError('Invalid level of analysis: %s' % level)
+
+    filepath = os.path.join(feature_dir, file_pattern)
+    feature_files = glob('%s*.csv' % filepath)
+    list_dfs = [pd.read_csv(file) for file in feature_files]
+    df = pd.concat(list_dfs, ignore_index=False)
+
     df.reset_index(drop=True, inplace=True)
     return df
