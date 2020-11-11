@@ -36,6 +36,9 @@ rate = 1.2  # this is a classifier-specific setting
 random_state = 10  # random state for the classifier
 model = AdaBoostClassifier(n_estimators=nestimators, random_state=random_state,
                            learning_rate=rate)
+# name and path of the output file in which we store the performance results
+# of the feature sets
+out_file = 'output/wrapper_ada2_n_{}_rate_{}'.format(nestimators, rate)
 
 # %% load feature data
 df = load_features(level)
@@ -86,8 +89,7 @@ for ii, comb in enumerate(tqdm(allcombs)):
                                                    level=level,
                                                    shuffle=shuffle)
 # save results
-np.savez('output/wrapper_ada2_n_{}_rate_{}'.format(nestimators, rate),
-         scores=scores, features=np.array(allcombs))
+np.savez(out_file, scores=scores, features=np.array(allcombs))
 
 # %% Plot results
 # Sort best combinations
