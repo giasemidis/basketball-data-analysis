@@ -1,6 +1,7 @@
 {
   "n_rounds": 34,
   "output_dir": "data/",
+  "f4teams_file": "data/f4teams.json",
   "game_stats": {
     "url_link": "http://www.euroleague.net/main/results?gamenumber=%d&phasetypecode=RS&seasoncode=E%d",
     "output_file_prefix": "euroleague_game_stats"
