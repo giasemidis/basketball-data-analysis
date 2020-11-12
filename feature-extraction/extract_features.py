@@ -7,21 +7,31 @@ from make_features import make_game_features
 from make_features import make_team_features
 sys.path.append('auxiliary')  # noqa: E402
 from io_json import read_json
-from argparser_types import is_valid_parent_path
 
 logging.basicConfig(level=logging.INFO)
 
 
-def main(season, results_file, standings_file, f4_file):
+def main(season):
     '''
     Extract features (game and team) from the fetched data from the
     Euroleague's site
     '''
+    # get data settings
+    data_settings = read_json('settings/data_collection.json')
+    out_dir = data_settings['output_dir']
+    rslts_file_prefix = data_settings['season_results']['output_file_prefix']
+    results_file = os.path.join(
+        out_dir, '%s_%d_%d.csv' % (rslts_file_prefix, season - 1, season))
+    stnds_file_prefix = data_settings['season_standings']['output_file_prefix']
+    standings_file = os.path.join(
+        out_dir, '%s_%d_%d.csv' % (stnds_file_prefix, season - 1, season))
+    f4_file = data_settings['f4teams_file']
 
-    settings = read_json('settings/feature_extraction.json')
-    feature_dir = settings['feature_dir']
-    match_level_file_ = settings['match_level_feature_file_prefix']
-    team_level_file_ = settings['team_level_feature_file_prefix']
+    # get feature settings
+    feat_settings = read_json('settings/feature_extraction.json')
+    feature_dir = feat_settings['feature_dir']
+    match_level_file_ = feat_settings['match_level_feature_file_prefix']
+    team_level_file_ = feat_settings['team_level_feature_file_prefix']
     match_level_file = os.path.join(
         feature_dir, '%s_%d_%d.csv' % (match_level_file_, season - 1, season))
     team_level_file = os.path.join(
@@ -53,15 +63,7 @@ if __name__ == "__main__":
     parser = argparse.ArgumentParser()
     parser.add_argument('-s', '--season', required=True, type=int,
                         help="the ending year of the season")
-    parser.add_argument('-r', '--results', required=True,
-                        type=lambda x: is_valid_parent_path(parser, x),
-                        help="results file of a season")
-    parser.add_argument('-t', '--table', required=True,
-                        type=lambda x: is_valid_parent_path(parser, x),
-                        help="table/standings file of a season")
-    parser.add_argument('-f', '--final_four', required=True,
-                        type=lambda x: is_valid_parent_path(parser, x),
-                        help="final four file of teams of previous a season")
+
     args = parser.parse_args()
 
-    main(args.season, args.results, args.table, args.final_four)
+    main(args.season)
