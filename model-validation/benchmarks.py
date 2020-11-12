@@ -9,26 +9,36 @@ Performs simple analysis and evaluates the scoring of simple benchmark models:
     5) Panathinaikos always wins, otherwise home team always wins
     6) Random model.
 """
+import sys
+import os
 import argparse
 import numpy as np
 import pandas as pd
-import sys
 from sklearn.metrics import accuracy_score, balanced_accuracy_score
 from sklearn.metrics import roc_auc_score
-# sys.path.append('auxiliary')
-from auxiliary.io_json import read_json
+sys.path.append('auxiliary')  # noqa: E402
+from io_json import read_json
 
 
-def main(year):
+def main(season):
+
+    # get settings
+    settings = read_json('settings/data_collection.json')
+    out_dir = settings['output_dir']
+    rslts_file_prefix = settings['season_results']['output_file_prefix']
+    rslts_filename = '%s_%d_%d.csv' % (rslts_file_prefix, season - 1, season)
+    stnds_file_prefix = settings['season_standings']['output_file_prefix']
+    stnds_filename = '%s_%d_%d.csv' % (stnds_file_prefix, season - 1, season)
 
     # read input data (results and standings)
-    data = pd.read_csv('data/euroleague_results_%d_%d.csv' % (year, year + 1))
-    standings = pd.read_csv('data/euroleague_standings_%d_%d.csv'
-                            % (year, year + 1))
-    f4teams = read_json('data/f4teams.json')
+    rslts_filepath = os.path.join(out_dir, rslts_filename)
+    stnds_filepath = os.path.join(out_dir, stnds_filename)
+    data = pd.read_csv(rslts_filepath)
+    standings = pd.read_csv(stnds_filepath)
+    f4teams = read_json(settings['f4teams_file'])
 
     # Specify the F4 teams of the previous year
-    f4Teams = f4teams[str(year)]
+    f4Teams = f4teams[str(season - 1)]
 
     # Checks
     flag = False
@@ -46,11 +56,7 @@ def main(year):
     if flag:
         sys.exit('Fix inconsistancies in team names')
 
-    # teams = np.unique((data['Home Team'].values))
     nmatches = data.shape[0]
-    # ngames = int(2 * nmatches / len(teams))
-
-    # team_dict = dict.fromkeys(teams, np.ones(ngames, dtype=int))
 
     data['Actual'] = np.where(data['Home Score'] > data['Away Score'], 1, 2)
     data['Home Wins'] = np.ones(nmatches, dtype=int)
@@ -113,8 +119,11 @@ def main(year):
         rand = np.random.randint(1, 3, nmatches)
         random[i] = np.sum(data['Actual'].values == rand)
 
-    data = data[~np.in1d(data['Round'], [1])]
-    print(data.shape[0])
+    rounds_excl = [1]
+    print('Exclude round from evaluation:', rounds_excl)
+    data = data[~np.in1d(data['Round'], rounds_excl)]
+
+    print('Number of games:', data.shape[0])
     print('Home wins  :', np.sum(data['Actual'] == data['Home Wins']))
     print('Top4 wins  :', np.sum(data['Actual'] == data['F4 Wins']))
     print('Persistance:', np.sum(data['Actual'] == data['Persistence']))
