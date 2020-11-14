@@ -1,9 +1,9 @@
 """
 Performs simple analysis and evaluates the scoring of simple benchmark models:
     1) Home team always wins
-    2) F4 teams alway win when playing with a non-F4 team,
+    2) F4 teams always win when playing with a non-F4 team,
         otherwise home team always wins.
-    3) Persistence model, teams that won in the previoous round win,
+    3) Persistence model, teams that won in the previous round win,
         if both teams have won, home team wins.
     4) Standing model, team higher in the standings wins.
     5) Panathinaikos always wins, otherwise home team always wins
