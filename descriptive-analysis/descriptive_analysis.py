@@ -2,7 +2,7 @@ import glob
 import numpy as np
 import pandas as pd
 
-import plotly_express as px
+import plotly.express as px
 
 from utils import make_scatter_plot, make_bar_plot
 from utils import make_scatter_plot_at_least_n_points
